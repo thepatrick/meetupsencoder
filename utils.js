@@ -67,7 +67,7 @@ function meltTracksForStartAndEndTime (videoFilesRoot, files, fps, start, end) {
   return _.flatten(meltFiles)
 }
 
-function createMeltCommand (melt, profile, sources, outputFilename, audioCodec = 'aac', videoCodec = 'libx264') {
+function createMeltCommand (profile, sources, outputFilename, audioCodec = 'aac', videoCodec = 'libx264') {
   return [
     '-profile', profile
     // '-progress'
@@ -105,11 +105,28 @@ function runCommand (cmd, args) {
   })
 }
 
+async function createCommandFromJob ({ videoFilesRoot, clips, fps, profile, fileName }) {
+  const files = await filesByStartTime(videoFilesRoot)
+
+  const sources = clips.map(([start, end]) => (
+    meltTracksForStartAndEndTime(
+      videoFilesRoot,
+      files,
+      fps,
+      timeFromFileName(start),
+      timeFromFileName(end)
+    )
+  ))
+
+  return createMeltCommand(profile, sources, fileName, 'aac', 'libx264')
+}
+
 module.exports = {
   timeFromFileName,
   fileNameFromTime,
   filesByStartTime,
   meltTracksForStartAndEndTime,
   createMeltCommand,
-  runCommand
+  runCommand,
+  createCommandFromJob
 }
