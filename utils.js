@@ -10,13 +10,11 @@ const readdirAsync = util.promisify(fs.readdir)
 function timeFromFileName (filePath) {
   const fileTime = path.basename(filePath, '.ts')
   const fileDirectory = path.dirname(filePath)
-  const t = moment(fileDirectory + ' ' + fileTime, 'YYYY-MM-DD HH_mm_ss')
-  return t.unix()
+  return moment(fileDirectory + ' ' + fileTime, 'YYYY-MM-DD HH_mm_ss').unix()
 }
 
 function fileNameFromTime (time) {
-  const t = moment.unix(time)
-  return t.format('YYYY-MM-DD/HH_mm_ss') + '.ts'
+  return moment.unix(time).format('YYYY-MM-DD/HH_mm_ss') + '.ts'
 }
 
 async function filesByStartTime (videoFilesRoot) {
@@ -24,15 +22,14 @@ async function filesByStartTime (videoFilesRoot) {
     .filter(f => f.isDirectory())
 
   const allFiles = await Promise.all(
-    dayDirectories.map(async d => {
-      return (await readdirAsync(path.join(videoFilesRoot, d.name), { withFileTypes: true }))
+    dayDirectories.map(async d => (
+      (await readdirAsync(path.join(videoFilesRoot, d.name), { withFileTypes: true }))
         .filter(f => f.isFile() && path.extname(f.name) === '.ts')
         .map(f => path.join(videoFilesRoot, d.name, f.name))
-    })
+    ))
   )
 
-  const files = _.flatten(allFiles).map(timeFromFileName)
-  return files
+  return _.flatten(allFiles).map(timeFromFileName)
 }
 
 function meltTracksForStartAndEndTime (videoFilesRoot, files, fps, start, end) {
