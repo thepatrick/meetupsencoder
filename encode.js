@@ -1,5 +1,5 @@
 const {
-  createCommandFromJob,
+  commandFromJob,
   runCommand
 } = require('./utils')
 
@@ -38,7 +38,7 @@ const jobs = [
 
 async function main () {
   await Promise.all(
-    jobs.map(async job => runCommand(melt, await createCommandFromJob(job)))
+    jobs.map(async job => runCommand(melt, await commandFromJob(job)))
   )
   console.log('All done')
 }

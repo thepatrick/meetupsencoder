@@ -32,15 +32,15 @@ async function filesByStartTime (videoFilesRoot) {
   return _.flatten(allFiles).map(timeFromFileName)
 }
 
-function meltTracksForStartAndEndTime (videoFilesRoot, files, fps, start, end) {
+function findSourcesForClip (videoFilesRoot, files, fps, start, end) {
   const pickedFiles = files.filter((element, index) => {
     if (element > end) {
       return false
     }
     if (
       element < start && // we are before the start timestamp
-    index + 1 < files.length && // there are more files
-    files[index + 1] < start // the next file is also before the start timestamp
+      index + 1 < files.length && // there are more files
+      files[index + 1] < start // the next file is also before the start timestamp
     ) {
       return false
     }
@@ -106,24 +106,13 @@ async function createCommandFromJob ({ videoFilesRoot, clips, fps, profile, file
   const files = await filesByStartTime(videoFilesRoot)
 
   const sources = clips.map(([start, end]) => (
-    meltTracksForStartAndEndTime(
-      videoFilesRoot,
-      files,
-      fps,
-      timeFromFileName(start),
-      timeFromFileName(end)
-    )
+    findSourcesForClip(videoFilesRoot, files, fps, timeFromFileName(start), timeFromFileName(end))
   ))
 
   return createMeltCommand(profile, sources, fileName, 'aac', 'libx264')
 }
 
 module.exports = {
-  timeFromFileName,
-  fileNameFromTime,
-  filesByStartTime,
-  meltTracksForStartAndEndTime,
-  createMeltCommand,
-  runCommand,
-  createCommandFromJob
+  createCommandFromJob,
+  runCommand
 }
