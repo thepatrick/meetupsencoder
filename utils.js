@@ -3,6 +3,7 @@ const fs = require('fs')
 const moment = require('moment')
 const path = require('path')
 const util = require('util')
+const { spawn } = require('child_process')
 
 const readdirAsync = util.promisify(fs.readdir)
 
@@ -76,10 +77,39 @@ function createMeltCommand (melt, profile, sources, outputFilename, audioCodec =
     ])
 }
 
+function runCommand (cmd, args) {
+  return new Promise((resolve, reject) => {
+    console.log('Starting', cmd, args)
+
+    const ps = spawn(cmd, args, {
+      cwd: process.cwd(),
+      env: process.env
+    })
+
+    ps.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`)
+    })
+
+    ps.stderr.on('data', (data) => {
+      console.log(`stderr: ${data}`)
+    })
+
+    ps.on('close', (code) => {
+      console.log(`child process exited with code ${code}`)
+      if (code === 0) {
+        resolve()
+      } else {
+        reject(new Error(`Unexpected exit code ${code}`))
+      }
+    })
+  })
+}
+
 module.exports = {
   timeFromFileName,
   fileNameFromTime,
   filesByStartTime,
   meltTracksForStartAndEndTime,
-  createMeltCommand
+  createMeltCommand,
+  runCommand
 }
