@@ -1,0 +1,13 @@
+version: '3'
+services:
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+  resque-web:
+    image: ennexa/resque-web
+    ports:
+      - "5678:5678"
+    links:
+      - redis
+    command: -r redis://redis:6379
