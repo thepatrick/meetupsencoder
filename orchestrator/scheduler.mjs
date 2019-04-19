@@ -1,12 +1,15 @@
 import { Scheduler } from '../common/node-resque'
 
 class Schedulator {
-  async boot (connection) {
+  constructor (connection) {
+    this.connection = connection
+  }
+
+  async boot () {
     // ////////////////////
     // START A SCHEDULER //
     // ////////////////////
-
-    this.scheduler = new Scheduler({ connection })
+    this.scheduler = new Scheduler({ connection: this.connection })
     await this.scheduler.connect()
     this.scheduler.start()
 
