@@ -1,35 +1,22 @@
-const _ = require('lodash')
-const fs = require('fs')
-const moment = require('moment')
-const path = require('path')
-const util = require('util')
-const { spawn } = require('child_process')
+import _ from 'lodash'
+import { readdir } from 'fs'
+import moment from 'moment'
+import { basename, dirname, join, extname } from 'path'
+import { promisify } from 'util'
+import { spawn } from 'child_process'
 
-const readdirAsync = util.promisify(fs.readdir)
+const readdirAsync = promisify(readdir)
+const { unix } = moment
+const { flatten } = _
 
 function timeFromFileName (filePath) {
-  const fileTime = path.basename(filePath, '.ts')
-  const fileDirectory = path.dirname(filePath)
+  const fileTime = basename(filePath, '.ts')
+  const fileDirectory = dirname(filePath)
   return moment(fileDirectory + ' ' + fileTime, 'YYYY-MM-DD HH_mm_ss').unix()
 }
 
 function fileNameFromTime (time) {
-  return moment.unix(time).format('YYYY-MM-DD/HH_mm_ss') + '.ts'
-}
-
-async function filesByStartTime (videoFilesRoot) {
-  const dayDirectories = (await readdirAsync(videoFilesRoot, { withFileTypes: true }))
-    .filter(f => f.isDirectory())
-
-  const allFiles = await Promise.all(
-    dayDirectories.map(async d => (
-      (await readdirAsync(path.join(videoFilesRoot, d.name), { withFileTypes: true }))
-        .filter(f => f.isFile() && path.extname(f.name) === '.ts')
-        .map(f => path.join(videoFilesRoot, d.name, f.name))
-    ))
-  )
-
-  return _.flatten(allFiles).map(timeFromFileName)
+  return unix(time).format('YYYY-MM-DD/HH_mm_ss') + '.ts'
 }
 
 function findSourcesForClip (videoFilesRoot, files, fps, start, end) {
@@ -49,7 +36,7 @@ function findSourcesForClip (videoFilesRoot, files, fps, start, end) {
   })
 
   const meltFiles = pickedFiles.map((file, index) => {
-    let cmd = [path.join(videoFilesRoot, fileNameFromTime(file))]
+    let cmd = [join(videoFilesRoot, fileNameFromTime(file))]
     if (file < start) {
       cmd.push('in=' + ((start - file)) * fps)
     }
@@ -61,20 +48,37 @@ function findSourcesForClip (videoFilesRoot, files, fps, start, end) {
     return cmd
   })
 
-  return _.flatten(meltFiles)
+  return flatten(meltFiles)
+}
+
+async function createVideoFileFinder (videoFilesRoot) {
+  const dayDirectories = (await readdirAsync(videoFilesRoot, { withFileTypes: true }))
+    .filter(f => f.isDirectory())
+
+  const allFiles = await Promise.all(
+    dayDirectories.map(async d => (
+      (await readdirAsync(join(videoFilesRoot, d.name), { withFileTypes: true }))
+        .filter(f => f.isFile() && extname(f.name) === '.ts')
+        .map(f => join(videoFilesRoot, d.name, f.name))
+    ))
+  )
+
+  const flatFiles = flatten(allFiles).map(timeFromFileName)
+
+  return findSourcesForClip.bind(null, videoFilesRoot, flatFiles)
 }
 
 function createMeltCommand (profile, sources, outputFilename, audioCodec = 'aac', videoCodec = 'libx264') {
   return [
     '-profile', profile
     // '-progress'
-  ].concat(_.flatten(sources))
+  ].concat(flatten(sources))
     .concat([
       '-consumer', `avformat:${outputFilename}`, `acodec=${audioCodec}`, `vcodec=${videoCodec}`
     ])
 }
 
-function runCommand (cmd, args) {
+export function runCommand (cmd, args) {
   return new Promise((resolve, reject) => {
     console.log('Starting', cmd, args)
 
@@ -102,17 +106,12 @@ function runCommand (cmd, args) {
   })
 }
 
-async function createCommandFromJob ({ videoFilesRoot, clips, fps, profile, fileName }) {
-  const files = await filesByStartTime(videoFilesRoot)
+export async function commandFromJob ({ videoFilesRoot, clips, fps, profile, fileName }) {
+  const findSources = await createVideoFileFinder(videoFilesRoot)
 
   const sources = clips.map(([start, end]) => (
-    findSourcesForClip(videoFilesRoot, files, fps, timeFromFileName(start), timeFromFileName(end))
+    findSources(fps, timeFromFileName(start), timeFromFileName(end))
   ))
 
   return createMeltCommand(profile, sources, fileName, 'aac', 'libx264')
-}
-
-module.exports = {
-  createCommandFromJob,
-  runCommand
 }
