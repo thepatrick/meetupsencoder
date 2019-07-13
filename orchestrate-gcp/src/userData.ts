@@ -1,5 +1,5 @@
-import { map, flatten, prop, pipe, uniq, filter } from 'ramda';
 import { join } from 'path';
+import { filter, flatten, map, pipe, prop, uniq } from 'ramda';
 import { MeltFile } from './MeltFile';
 
 const createMeltCommand = (
@@ -30,7 +30,7 @@ export const userData = (
   profile: string,
   sources: MeltFile[][],
 ): string => {
-  const dataDirectory = '/srv/encoder/data/';
+  const dataDirectory = '/var/lib/twopats.live-encoder/';
 
   const files: string[] = extractUniqFiles(sources);
 
@@ -56,46 +56,62 @@ export const userData = (
   );
 
   const downloads = map(
-    i => `gsutil -m cp gs://${bucket}/${encoder}/${i} ${join(dataDirectory, i)}`,
+    i => ({ src: `gs://${bucket}/${encoder}/${i}`, dest: join(dataDirectory, i) }),
     files,
   );
 
-  return `#!/bin/bash
+  const uploads = [
+    { src: encodedFile, dest: `gs://${bucket}/${fileName}` },
+  ];
 
-# Create working directory
-mkdir -p ${dataDirectory}
+  const jobFile = '/etc/twopats-live-melt-job.json';
 
-# Download required video files
-${downloads.join('\n')}
+  return `#cloud-config
 
-docker pull thepatrick/melt
+users:
+- name: twopats-live-melt
+  uid: 2000
 
-docker run --rm -it -v ${dataDirectory}:${dataDirectory} thepatrick/melt ${meltCommand.join(' ')}
+write_files:
+- path: ${jobFile}
+  permissions: 0644
+  owner: root
+  content: |
+    ${JSON.stringify({ downloads, meltCommand, uploads }, null, 2).split('\n').join('\n    ')}
+- path: /etc/systemd/system/twopats-live-melt.service
+  permissions: 0644
+  owner: root
+  content: |
+    [Unit]
+    Description=Encodes a video
 
-gsutil -m cp ${encodedFile} gs://${bucket}/${fileName}
-  `;
+    [Service]
+    ExecStart=/usr/bin/docker run --rm -u 2000 -v ${jobFile}:${jobFile}:ro \
+      --name=twopats-live-melt thepatrick/melt ${jobFile}
+    ExecStop=/usr/bin/docker stop twopats-live-melt
+    ExecStopPost=/usr/bin/docker rm twopats-live-melt
+
+runcmd:
+- systemctl daemon-reload
+- systemctl start twopats-live-melt.service
+`;
+
 };
 
 /*
+# Create working directory
+mkdir -p ${dataDirectory}
 
-sudo apt-get install \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg2 \
-    software-properties-common
+cat > ${jobFile} <<EOF
+${JSON.stringify({ downloads, meltCommand, uploads }, null, 2)}
+EOF
 
-    --assume-yes?
+docker run --rm -it \
+  -v ${dataDirectory}:${dataDirectory} \
+  thepatrick/melt \
+  ${jobFile}
 
-curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
-
-sudo add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/debian \
-   $(lsb_release -cs) \
-   stable"
-
-sudo apt-get update
-
-sudo apt-get install docker-ce docker-ce-cli containerd.io
-
+gcloud compute instances create INSTANCE_NAME \
+    --image cos-stable-75-12105-97-0 \
+    --metadata-from-file user-data=FILENAME
 */

@@ -1,0 +1,22 @@
+{
+  "name": "orchestrate-gcp-docker-melt",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tslint --project . && tsc",
+    "start": "node dist/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ramda": "^0.26.1"
+  },
+  "devDependencies": {
+    "@types/node": "^12.6.2",
+    "@types/ramda": "^0.26.15",
+    "tslint": "^5.18.0",
+    "tslint-config-airbnb": "^5.11.1",
+    "typescript": "^3.5.3"
+  }
+}

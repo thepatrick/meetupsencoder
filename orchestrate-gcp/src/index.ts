@@ -1,20 +1,12 @@
 import { Storage } from '@google-cloud/storage';
 import { map, pipe } from 'ramda';
-import { timeFromFileName } from './utils/time';
+import { findSourcesForClip } from './findSourcesForClip';
+import { Job } from './Job';
 import { listFiles } from './listFiles';
 import { userData } from './userData';
-import { findSourcesForClip } from './findSourcesForClip';
+import { timeFromFileName } from './utils/time';
 
 const storage = new Storage();
-
-interface Job {
-  bucket: string;
-  encoderId: string;
-  clips: string[][];
-  fps: number;
-  profile: string;
-  fileName: string;
-}
 
 const commandFromJob = async ({
   bucket,
@@ -55,3 +47,12 @@ const commandFromJob = async ({
   console.log(generatedUserData);
 })()
   .catch(err => console.error(err));
+
+/*
+  Container-Optimized OS 75-12105.97.0 stable
+  Kernel: ChromiumOS-4.14.111
+  Kubernetes: 1.13.6
+  Docker: 18.09.7
+  Family: cos-stable
+  Secure Boot ready
+*/

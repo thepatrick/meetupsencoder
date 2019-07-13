@@ -1,7 +1,19 @@
-FROM node:10-stretch
+FROM node:12.6.0-stretch-slim as builder
+
+WORKDIR /opt/twopats.live/encoder
+
+COPY . /opt/twopats.live/encoder
+
+RUN npm install \
+  && npm run build \
+  && rm -rf node_modules \
+  && npm install --production \
+  && rm -rf src
+
+FROM google/cloud-sdk:252.0.0-slim
 
 RUN apt-get update \
- && apt-get install --assume-yes \
+  && apt-get install --assume-yes \
   frei0r-plugins \
   libdlrestrictions1 \
   libgavl1 \
@@ -19,7 +31,10 @@ RUN apt-get update \
   python-httplib2 \
   python-mlt
 
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
+COPY --from=builder /usr/local /usr/local
 
-ENTRYPOINT [ "/usr/bin/melt" ]
+COPY --from=builder /opt/twopats.live/encoder /opt/twopats.live/encoder
+
+WORKDIR /opt/twopats.live/encoder
+
+ENTRYPOINT [ "node", "dist/index.js" ]

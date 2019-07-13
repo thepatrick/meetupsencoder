@@ -1,0 +1,31 @@
+{
+  "downloads": [
+    {
+      "src": "gs://video.twopats.live/standalone/2019-06-19/18_42_49.ts",
+      "dest": "/var/lib/twopats.live-encoder/2019-06-19/18_42_49.ts"
+    },
+    {
+      "src": "gs://video.twopats.live/standalone/2019-06-19/19_12_49.ts",
+      "dest": "/var/lib/twopats.live-encoder/2019-06-19/19_12_49.ts"
+    }
+  ],
+  "meltCommand": [
+    "-profile",
+    "atsc_1080p_25",
+    "/var/lib/twopats.live-encoder/2019-06-19/18_42_49.ts",
+    "in=12275",
+    "/var/lib/twopats.live-encoder/2019-06-19/19_12_49.ts",
+    "out=275",
+    "-consumer",
+    "avformat:/var/lib/twopats.live-encoder/encoded.mp4",
+    "acodec=aac",
+    "vcodec=libx264"
+  ],
+  "uploads": [
+    {
+      "src": "/var/lib/twopats.live-encoder/encoded.mp4",
+      "dest": "gs://video.twopats.live/encodes/test.mp4"
+    }
+  ]
+}
+
