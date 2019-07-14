@@ -1,7 +1,7 @@
 import { Storage } from '@google-cloud/storage';
-import { commandFromJob } from './commandFromJob';
-import { userData } from './userData';
-import { asyncMain } from './utils/asyncMain';
+import { commandFromJob } from '../encoder/commandFromJob';
+import { userData } from '../encoder/userData';
+import { asyncMain } from '../utils/asyncMain';
 
 asyncMain(async () => {
   const storage = new Storage();

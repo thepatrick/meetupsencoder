@@ -4,7 +4,7 @@ import { getStatusText, INTERNAL_SERVER_ERROR } from 'http-status-codes';
 import nanoid from 'nanoid';
 import shortid from 'shortid';
 import { DatabasePoolType, sql } from 'slonik';
-import { commandFromJob } from '../commandFromJob';
+import { commandFromJob } from '../encoder/commandFromJob';
 import { isHttpResponseError } from '../httpErrors/HttpResponseError';
 import { asyncResponse } from '../middleware/asyncResponse';
 import { hasSecret } from '../middleware/hasSecret';

@@ -1,8 +1,7 @@
 import { File, Storage } from '@google-cloud/storage';
 import { extname } from 'path';
-
-import { timeFromFileName } from './utils/time';
-import { pipe, map, prop, filter, equals, replace } from 'ramda';
+import { equals, filter, map, pipe, prop, replace } from 'ramda';
+import { timeFromFileName } from '../utils/time';
 
 const isTS = pipe(
   extname,
@@ -13,7 +12,7 @@ export const listFiles = async (
   storage: Storage,
   bucketName: string,
   prefix: string): Promise<number[]> => {
-  const [files] = await storage.bucket(bucketName).getFiles({ prefix /*   delimiter: '/', */ });
+  const [files] = await storage.bucket(bucketName).getFiles({ prefix });
   const regex = new RegExp(`^${prefix}`);
 
   return pipe(

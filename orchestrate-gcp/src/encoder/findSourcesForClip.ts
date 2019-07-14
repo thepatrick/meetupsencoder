@@ -1,5 +1,5 @@
 import { curry } from 'ramda';
-import { fileNameFromTime } from './utils/time';
+import { fileNameFromTime } from '../utils/time';
 import { MeltFile } from './MeltFile';
 
 export const findSourcesForClip = curry(
