@@ -9,12 +9,17 @@ import { isHttpResponseError } from '../httpErrors/HttpResponseError';
 import { asyncResponse } from '../middleware/asyncResponse';
 import { hasSecret } from '../middleware/hasSecret';
 import { withDatabaseConnection } from '../middleware/withDatabaseConnection';
+import { isValidJobSubmission } from '../encoder/Job';
+import { UnprocessableEntityError } from '../httpErrors/UnprocessableEntityError';
+import { insertJob } from '../db/insertJob';
 
 type RegisterRoutes = (
   app: Application,
   pool: DatabasePoolType,
   storage: Storage,
   secret: string,
+  bucket: string,
+  selfUrl: string,
 ) => void;
 
 const isNonEmptyString = (possible: unknown): possible is string => {
@@ -22,7 +27,7 @@ const isNonEmptyString = (possible: unknown): possible is string => {
 };
 
 // TODO: REMOVE SECRET
-export const registerRoutes: RegisterRoutes = (app, pool, storage, secret) => {
+export const registerRoutes: RegisterRoutes = (app, pool, storage, secret, bucket, selfUrl) => {
   app.get('/api/v1/job', hasSecret(secret), asyncResponse(
     withDatabaseConnection(
       pool, async (req, res, connection) => {
@@ -32,7 +37,6 @@ export const registerRoutes: RegisterRoutes = (app, pool, storage, secret) => {
               job_id,
               bucket,
               file_name,
-              cloud_init_data,
               status,
               created_at,
               updated_at,
@@ -44,56 +48,32 @@ export const registerRoutes: RegisterRoutes = (app, pool, storage, secret) => {
 
         return groups;
       }),
-    ),
-  );
+  ));
 
   app.post('/api/v1/job', hasSecret(secret), asyncResponse(
     withDatabaseConnection(
       pool,
       async (req, res, connection) => {
-        const bucket = 'video.twopats.live';
-        const fileName = 'encodes/test.mp4';
+        const body = req.body;
 
+        if (!isValidJobSubmission(body)) {
+          // TODO: Actuall call out that it's a validation proble.
+          throw new UnprocessableEntityError();
+        }
+
+        const id = shortid.generate();
+        const fileName = `encodes/${id}/${body.fileName}.mp4`;
         const jobFile = await commandFromJob(storage, {
           bucket,
           fileName,
-          encoderId: 'standalone',
-          clips: [
-            // ['2019-06-19/18_12_50', '2019-06-19/18_50_00'],
-            ['2019-06-19/18_51_00', '2019-06-19/19_13_00'],
-          ],
-          fps: 25,
-          profile: 'atsc_1080p_25',
+          encoderId: body.encoderId,
+          clips: body.clips,
+          fps: body.fps,
+          profile: body.profile,
         });
-        const id = shortid.generate();
+        const secret = nanoid(48);
 
-        console.log('inserting', id);
-
-        const insert = sql`
-          INSERT INTO job (
-            job_id,
-            bucket,
-            file_name,
-            cloud_init_data,
-            status,
-            created_at,
-            updated_at,
-            cloud_instance_id,
-            secret
-          ) VALUES (
-            ${id},
-            ${bucket},
-            ${fileName},
-            ${jobFile},
-            'NEW',
-            now(),
-            now(),
-            NULL,
-            ${nanoid(48)}
-          )
-        `;
-
-        await connection.query(insert);
+        await insertJob(connection, id, bucket, fileName, jobFile, secret);
 
         return { id };
       },

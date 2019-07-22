@@ -22,13 +22,29 @@ if (!secret) {
   throw new Error('Missing ME_SECRET (or not long enough)');
 }
 
+const bucket = !isNil(process.env.GOOGLE_STORAGE_BUCKET) &&
+  process.env.GOOGLE_STORAGE_BUCKET.length > 0 &&
+  process.env.GOOGLE_STORAGE_BUCKET;
+
+if (!bucket) {
+  throw new Error('Missing GOOGLE_STORAGE_BUCKET');
+}
+
+const selfUrl = !isNil(process.env.ME_SELF_URL) &&
+  process.env.ME_SELF_URL.length > 0 &&
+  process.env.ME_SELF_URL;
+
+if (!selfUrl) {
+  throw new Error('Missing ME_SELF_URL');
+}
+
 app.use(express.json());
 
 const pool = createDatabasePool();
 const storage = new Storage();
 
 // sessionAuth(app);
-registerRoutes(app, pool, storage, secret);
+registerRoutes(app, pool, storage, secret, bucket, selfUrl);
 
 // start the Express server
 app.listen(port, (err?: Error) => {
