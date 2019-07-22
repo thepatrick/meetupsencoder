@@ -1,5 +1,5 @@
 import { isNil, where, map } from 'ramda';
-import { isNonEmptyString } from '../utils/isNonEmptyString';
+import { isNonEmptyString } from '../../utils/isNonEmptyString';
 import { isNumber } from 'util';
 
 export type JobClip = [string, string];

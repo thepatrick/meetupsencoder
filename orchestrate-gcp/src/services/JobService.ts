@@ -1,7 +1,7 @@
 import Compute from '@google-cloud/compute';
 import { Storage } from '@google-cloud/storage';
 import shortid from 'shortid';
-import { JobSubmission } from '../encoder/Job';
+import { JobSubmission } from '../encoder/job/Job';
 import { commandFromJob } from '../encoder/commandFromJob';
 import nanoid from 'nanoid';
 import { insertJob } from '../db/insertJob';

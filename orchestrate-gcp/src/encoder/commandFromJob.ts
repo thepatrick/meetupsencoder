@@ -3,7 +3,7 @@ import { join } from 'path';
 import { filter, flatten, map, pipe, prop, uniq } from 'ramda';
 import { timeFromFileName } from '../utils/time';
 import { findSourcesForClip } from './findSourcesForClip';
-import { Job } from './Job';
+import { Job } from './job/Job';
 import { listFiles } from './listFiles';
 import { MeltFile } from './MeltFile';
 
