@@ -1,6 +1,7 @@
 {
-    "extends": "tslint-config-airbnb",
-    "rules": {
-      "only-arrow-functions": true
-    }
+  "extends": "tslint-config-airbnb",
+  "rules": {
+    "only-arrow-functions": true,
+    "import-name": false
   }
+}

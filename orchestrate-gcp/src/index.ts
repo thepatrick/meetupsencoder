@@ -1,3 +1,4 @@
+import Compute from '@google-cloud/compute';
 import { Storage } from '@google-cloud/storage';
 import { isNil } from 'ramda';
 import { isNumber } from 'util';
@@ -42,9 +43,10 @@ app.use(express.json());
 
 const pool = createDatabasePool();
 const storage = new Storage();
+const compute = new Compute();
 
 // sessionAuth(app);
-registerRoutes(app, pool, storage, secret, bucket, selfUrl);
+registerRoutes(app, pool, compute, storage, secret, bucket, selfUrl);
 
 // start the Express server
 app.listen(port, (err?: Error) => {

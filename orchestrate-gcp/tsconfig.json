@@ -9,7 +9,7 @@
     "sourceMap": true,
     "outDir": "dist",
     "alwaysStrict": true,
-    "baseUrl": ".",
+    "baseUrl": "src",
     "paths": {
       "*": [
         "node_modules/*"

@@ -1,21 +1,20 @@
+import Compute from '@google-cloud/compute';
 import { Storage } from '@google-cloud/storage';
 import { Application, NextFunction, Request, Response } from 'express';
 import { getStatusText, INTERNAL_SERVER_ERROR } from 'http-status-codes';
-import nanoid from 'nanoid';
-import shortid from 'shortid';
 import { DatabasePoolType, sql } from 'slonik';
-import { commandFromJob } from '../encoder/commandFromJob';
 import { isHttpResponseError } from '../httpErrors/HttpResponseError';
 import { asyncResponse } from '../middleware/asyncResponse';
 import { hasSecret } from '../middleware/hasSecret';
 import { withDatabaseConnection } from '../middleware/withDatabaseConnection';
 import { isValidJobSubmission } from '../encoder/Job';
 import { UnprocessableEntityError } from '../httpErrors/UnprocessableEntityError';
-import { insertJob } from '../db/insertJob';
+import { insertJobWithSubmission } from '../services/JobService';
 
 type RegisterRoutes = (
   app: Application,
   pool: DatabasePoolType,
+  compute: Compute,
   storage: Storage,
   secret: string,
   bucket: string,
@@ -27,7 +26,15 @@ const isNonEmptyString = (possible: unknown): possible is string => {
 };
 
 // TODO: REMOVE SECRET
-export const registerRoutes: RegisterRoutes = (app, pool, storage, secret, bucket, selfUrl) => {
+export const registerRoutes: RegisterRoutes = (
+  app,
+  pool,
+  compute,
+  storage,
+  secret,
+  bucket,
+  selfUrl,
+) => {
   app.get('/api/v1/job', hasSecret(secret), asyncResponse(
     withDatabaseConnection(
       pool, async (req, res, connection) => {
@@ -54,26 +61,21 @@ export const registerRoutes: RegisterRoutes = (app, pool, storage, secret, bucke
     withDatabaseConnection(
       pool,
       async (req, res, connection) => {
-        const body = req.body;
+        const jobSubmission = req.body;
 
-        if (!isValidJobSubmission(body)) {
+        if (!isValidJobSubmission(jobSubmission)) {
           // TODO: Actuall call out that it's a validation proble.
           throw new UnprocessableEntityError();
         }
 
-        const id = shortid.generate();
-        const fileName = `encodes/${id}/${body.fileName}.mp4`;
-        const jobFile = await commandFromJob(storage, {
+        const id = await insertJobWithSubmission(
+          compute,
+          storage,
+          selfUrl,
           bucket,
-          fileName,
-          encoderId: body.encoderId,
-          clips: body.clips,
-          fps: body.fps,
-          profile: body.profile,
-        });
-        const secret = nanoid(48);
-
-        await insertJob(connection, id, bucket, fileName, jobFile, secret);
+          connection,
+          jobSubmission,
+        );
 
         return { id };
       },
