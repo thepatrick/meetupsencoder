@@ -25,7 +25,6 @@ const isNonEmptyString = (possible: unknown): possible is string => {
   return typeof possible === 'string' && possible.length > 0;
 };
 
-// TODO: REMOVE SECRET
 export const registerRoutes: RegisterRoutes = (
   app,
   pool,
