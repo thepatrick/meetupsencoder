@@ -3,13 +3,13 @@ import { Storage } from '@google-cloud/storage';
 import { Application, NextFunction, Request, Response } from 'express';
 import { getStatusText, INTERNAL_SERVER_ERROR } from 'http-status-codes';
 import { DatabasePoolType, sql } from 'slonik';
+import { insertJobWithSubmission } from '../encoder/job/JobService';
+import { isValidJobSubmission } from '../encoder/job/JobSubmission';
 import { isHttpResponseError } from '../httpErrors/HttpResponseError';
+import { UnprocessableEntityError } from '../httpErrors/UnprocessableEntityError';
 import { asyncResponse } from '../middleware/asyncResponse';
 import { hasSecret } from '../middleware/hasSecret';
 import { withDatabaseConnection } from '../middleware/withDatabaseConnection';
-import { isValidJobSubmission } from '../encoder/job/Job';
-import { UnprocessableEntityError } from '../httpErrors/UnprocessableEntityError';
-import { insertJobWithSubmission } from '../encoder/job/JobService';
 
 type RegisterRoutes = (
   app: Application,
