@@ -9,7 +9,7 @@ import { hasSecret } from '../middleware/hasSecret';
 import { withDatabaseConnection } from '../middleware/withDatabaseConnection';
 import { isValidJobSubmission } from '../encoder/job/Job';
 import { UnprocessableEntityError } from '../httpErrors/UnprocessableEntityError';
-import { insertJobWithSubmission } from '../services/JobService';
+import { insertJobWithSubmission } from '../encoder/job/JobService';
 
 type RegisterRoutes = (
   app: Application,

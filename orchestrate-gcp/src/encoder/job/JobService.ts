@@ -1,12 +1,12 @@
 import Compute from '@google-cloud/compute';
 import { Storage } from '@google-cloud/storage';
 import shortid from 'shortid';
-import { JobSubmission } from '../encoder/job/Job';
-import { commandFromJob } from '../encoder/commandFromJob';
+import { JobSubmission } from './Job';
+import { commandFromJob } from '../commandFromJob';
 import nanoid from 'nanoid';
-import { insertJob } from '../db/insertJob';
+import { insertJob } from '../../db/insertJob';
 import { DatabasePoolConnectionType } from 'slonik';
-import { createCloudWorker } from '../encoder/createCloudWorker';
+import { createCloudWorker } from '../createCloudWorker';
 
 export const insertJobWithSubmission = async (
   compute: Compute,
