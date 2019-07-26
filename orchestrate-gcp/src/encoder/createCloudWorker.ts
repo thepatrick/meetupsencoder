@@ -1,17 +1,23 @@
 import { userData } from './userData';
-// tslint:disable-next-line: import-name
 import Compute from '@google-cloud/compute';
 import nanoid = require('nanoid');
+
+const metadata = (key: string, value: string) => ({
+  key,
+  value,
+});
+
+// GET ${jobURL}/config
+// POST ${jobURL}/status { status: 'EncoderDownloading' | 'Encoding' | 'Uploading' | 'Finished' | 'Failed' }
 
 export const createCloudWorker = async (
   compute: Compute,
   selfURL: string,
   jobId: string,
   secret: string,
-): Promise<string> => {
-  const jobURL = `${selfURL}/api/v1/job/${jobId}/config`;
+): Promise<[string, Promise<unknown>]> => {
+  const jobURL = `${selfURL}/api/v1/job/${jobId}`;
   const instanceName = `encoder-${jobId}-worker-${nanoid(4).toLowerCase()}`;
-
   const generatedStartupScript = userData(jobURL, secret);
 
   console.log('-----------------------------');
@@ -44,30 +50,16 @@ export const createCloudWorker = async (
     ],
     metadata: {
       items: [
-        {
-          key: 'cos-update-strategy',
-          value: 'update_disabled',
-        },
-        {
-          key: 'live-twopats-crofter-job-url',
-          value: jobURL,
-        },
-        {
-          key: 'live-twopats-crofter-secret',
-          value: secret,
-        },
-        {
-          key: 'startup-script', // or user-data?
-          value: generatedStartupScript,
-        },
+        metadata('cos-update-strategy', 'update_disabled'),
+        metadata('live-twopats-crofter-job-url', jobURL),
+        metadata('live-twopats-crofter-secret', secret),
+        metadata('startup-script', generatedStartupScript),
       ],
     },
     serviceAccounts: [
       {
         email: 'twopats-live-uploader@thepatrick-io.iam.gserviceaccount.com',
-        scopes: [
-          'https://www.googleapis.com/auth/cloud-platform',
-        ],
+        scopes: ['https://www.googleapis.com/auth/cloud-platform'],
       },
     ],
     networkInterfaces: [
@@ -84,14 +76,5 @@ export const createCloudWorker = async (
     ],
   });
 
-  console.log('Creating instance...');
-
-  // `operation` lets you check the status of long-running tasks.
-  const output = await operation.promise();
-
-  console.log(output);
-
-  console.log('Instance probably created.');
-
-  return instanceName;
+  return [instanceName, operation.promise()];
 };

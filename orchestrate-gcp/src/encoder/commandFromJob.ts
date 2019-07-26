@@ -3,9 +3,9 @@ import { join } from 'path';
 import { filter, flatten, map, pipe, prop, uniq } from 'ramda';
 import { timeFromFileName } from '../utils/time';
 import { findSourcesForClip } from './findSourcesForClip';
-import { Job } from './job/Job';
 import { listFiles } from './listFiles';
 import { MeltFile } from './MeltFile';
+import { JobSubmission } from './job/JobSubmission';
 
 const createMeltCommand = (
   profile: string,
@@ -72,14 +72,16 @@ export const generateJobFile = (
   return JSON.stringify({ downloads, meltCommand, uploads }, null, 2);
 };
 
-export const commandFromJob = async (storage: Storage, {
-  bucket,
-  encoderId,
-  clips,
-  fps,
-  profile,
-  fileName,
-}: Job): Promise<string> => {
+export const commandFromJob = async (
+  storage: Storage,
+  bucket: string,
+  encoderId: string,
+  {
+    clips,
+    fps,
+    profile,
+    fileName,
+  }: JobSubmission): Promise<string> => {
   const files = await listFiles(storage, bucket, `${encoderId}/`);
 
   const sources = map(

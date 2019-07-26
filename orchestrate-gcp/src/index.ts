@@ -6,6 +6,7 @@ import { createDatabasePool } from './db';
 // import { sessionAuth } from './middleware/sessionAuth';
 import { registerRoutes } from './routes';
 import express = require('express');
+import { runWorkerQueue } from './encoder/WorkerQueue/runWorkerQueue';
 
 const app = express();
 
@@ -46,7 +47,7 @@ const storage = new Storage();
 const compute = new Compute();
 
 // sessionAuth(app);
-registerRoutes(app, pool, compute, storage, secret, bucket, selfUrl);
+registerRoutes(app, pool, storage, secret, bucket);
 
 // start the Express server
 app.listen(port, (err?: Error) => {
@@ -56,3 +57,9 @@ app.listen(port, (err?: Error) => {
   }
   console.log(`server started at http://localhost:${port}`);
 });
+
+runWorkerQueue(
+  pool,
+  compute,
+  selfUrl,
+);

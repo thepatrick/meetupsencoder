@@ -1,11 +1,46 @@
-import { JobClip } from './JobClip';
-import { JobProfile } from './JobProfile';
+import { JobStatus, isValidJobStatus } from './JobStatus';
+import { is, where } from 'ramda';
+import { isNonEmptyString } from '../../utils/isNonEmptyString';
+import isNil from 'ramda/es/isNil';
+import { isString } from 'util';
 
 export interface Job {
+  jobId: string;
   bucket: string;
-  encoderId: string;
-  clips: JobClip[];
-  fps: number;
-  profile: JobProfile;
   fileName: string;
+  cloudInitData: unknown;
+  status: JobStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  cloudInstanceName?: string;
+  secret: string;
 }
+
+const isDate = (
+  possible: unknown,
+): possible is Date =>
+  is(Date, possible);
+
+const isUndefinedOrString = (
+  possible: unknown,
+): possible is string | undefined =>
+  isNil(undefined) || isString(possible);
+
+export const isValidJob = (
+  possible: unknown,
+): possible is Job => {
+  return where(
+    {
+      jobId: isNonEmptyString,
+      bucket: isNonEmptyString,
+      fileName: isNonEmptyString,
+      // cloudInitData:
+      status: isValidJobStatus,
+      createdAt: isDate,
+      updatedAt: isDate,
+      cloudInstanceName: isUndefinedOrString,
+      secret: isNonEmptyString,
+    },
+    possible,
+  );
+};

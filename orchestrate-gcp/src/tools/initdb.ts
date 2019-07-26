@@ -3,20 +3,48 @@ import { createDatabasePool } from '../db';
 import { asyncMain } from '../utils/asyncMain';
 
 const sqlStatements = [
+  sql`DROP TABLE IF EXISTS job`,
+  sql`DROP TYPE IF EXISTS job_status`,
+  sql`DROP TABLE IF EXISTS workerpost_queue`,
+  sql`DROP TYPE IF EXISTS worker_queue_action`,
   sql`
-    DROP TABLE IF EXISTS job;
+    CREATE TYPE job_status AS ENUM (
+      'NeedsEncoder',
+      'EncoderCreating',
+      'EncoderCreated',
+      'EncoderDownloading',
+      'Encoding',
+      'Uploading',
+      'Finished',
+      'Failed'
+    )
   `,
   sql`
     CREATE TABLE IF NOT EXISTS job (
-      job_id varchar(16) NOT NULL PRIMARY KEY,
-      bucket varchar(255) NOT NULL,
-      file_name varchar(255) NOT NULL,
-      cloud_init_data json NOT NULL,
-      status varchar(255) NOT NULL,
-      created_at timestamp NOT NULL,
-      updated_at timestamp NOT NULL,
-      cloud_instance_id varchar(255),
-      secret char(48) NOT NULL
+      job_id              CHAR(16) NOT NULL PRIMARY KEY,
+      bucket              VARCHAR(255) NOT NULL,
+      file_name           VARCHAR(255) NOT NULL,
+      cloud_init_data     JSON NOT NULL,
+      status              job_status NOT NULL,
+      created_at          TIMESTAMP NOT NULL,
+      updated_at          TIMESTAMP NOT NULL,
+      cloud_instance_name VARCHAR(255),
+      secret              CHAR(48) NOT NULL
+    )
+  `,
+  sql`
+    CREATE TYPE worker_queue_action AS ENUM (
+      'Create',
+      'Destroy'
+    )
+  `,
+  sql`
+    CREATE TABLE IF NOT EXISTS worker_queue (
+      worker_queue_item_id CHAR(16) NOT NULL PRIMARY KEY,
+      retries_remaining    INT NOT NULL DEFAULT 3,
+      time_created         TIMESTAMP DEFAULT NOW() NOT NULL,
+      job_id               CHAR(16) NOT NULL,
+      action               worker_queue_action NOT NULL
     )
   `,
 ];

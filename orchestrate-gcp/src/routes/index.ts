@@ -14,11 +14,9 @@ import { withDatabaseConnection } from '../middleware/withDatabaseConnection';
 type RegisterRoutes = (
   app: Application,
   pool: DatabasePoolType,
-  compute: Compute,
   storage: Storage,
   secret: string,
   bucket: string,
-  selfUrl: string,
 ) => void;
 
 const isNonEmptyString = (possible: unknown): possible is string => {
@@ -28,11 +26,9 @@ const isNonEmptyString = (possible: unknown): possible is string => {
 export const registerRoutes: RegisterRoutes = (
   app,
   pool,
-  compute,
   storage,
   secret,
   bucket,
-  selfUrl,
 ) => {
   app.get('/api/v1/job', hasSecret(secret), asyncResponse(
     withDatabaseConnection(
@@ -68,9 +64,7 @@ export const registerRoutes: RegisterRoutes = (
         }
 
         const id = await insertJobWithSubmission(
-          compute,
           storage,
-          selfUrl,
           bucket,
           connection,
           jobSubmission,
