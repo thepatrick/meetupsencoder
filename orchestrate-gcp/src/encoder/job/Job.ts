@@ -1,7 +1,6 @@
 import { JobStatus, isValidJobStatus } from './JobStatus';
-import { is, where } from 'ramda';
+import { is, isNil, where } from 'ramda';
 import { isNonEmptyString } from '../../utils/isNonEmptyString';
-import isNil from 'ramda/es/isNil';
 import { isString } from 'util';
 
 export interface Job {

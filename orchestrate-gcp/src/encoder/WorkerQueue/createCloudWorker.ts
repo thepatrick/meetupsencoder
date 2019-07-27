@@ -1,4 +1,4 @@
-import { userData } from './userData';
+import { generateStartupScript } from './generateStartupScript';
 import Compute from '@google-cloud/compute';
 import nanoid = require('nanoid');
 
@@ -8,7 +8,8 @@ const metadata = (key: string, value: string) => ({
 });
 
 // GET ${jobURL}/config
-// POST ${jobURL}/status { status: 'EncoderDownloading' | 'Encoding' | 'Uploading' | 'Finished' | 'Failed' }
+// POST ${jobURL}/status {
+//  status: 'EncoderDownloading' | 'Encoding' | 'Uploading' | 'Finished' | 'Failed' }
 
 export const createCloudWorker = async (
   compute: Compute,
@@ -18,7 +19,7 @@ export const createCloudWorker = async (
 ): Promise<[string, Promise<unknown>]> => {
   const jobURL = `${selfURL}/api/v1/job/${jobId}`;
   const instanceName = `encoder-${jobId}-worker-${nanoid(4).toLowerCase()}`;
-  const generatedStartupScript = userData(jobURL, secret);
+  const generatedStartupScript = generateStartupScript(jobURL, secret);
 
   console.log('-----------------------------');
   console.log(generatedStartupScript);
@@ -26,8 +27,7 @@ export const createCloudWorker = async (
 
   const zone = compute.zone('australia-southeast1-b'); // b, c, a
 
-  // Start the VM create task
-  const [, operation] = await zone.createVM(instanceName, {
+  const config = {
     machineType: 'n1-standard-8',
     tags: ['live-twopats-crofter-encoder'],
     scheduling: {
@@ -74,7 +74,14 @@ export const createCloudWorker = async (
         ],
       },
     ],
-  });
+  };
 
-  return [instanceName, operation.promise()];
+  console.log('config', config);
+
+  throw new Error('Not ready to do this for reals yet');
+
+  // Start the VM create task
+  // const [, operation] = await zone.createVM(instanceName, config);
+
+  // return [instanceName, operation.promise()];
 };

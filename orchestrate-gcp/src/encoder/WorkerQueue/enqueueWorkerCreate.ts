@@ -8,11 +8,11 @@ export const enqueueCreate = async (
 ): Promise<void> => {
   await connection.query(sql`
     INSERT INTO worker_queue (
-      worker_queue_item_id,
-      retries_remaining,
-      time_created,
-      job_id,
-      action,
+      "workerQueueItemId",
+      "retriesRemaining",
+      "timeCreated",
+      "jobId",
+      "action"
     ) VALUES (
       ${shortid.generate()},
       3,

@@ -1,13 +1,13 @@
-import Compute from '@google-cloud/compute';
 import { Storage } from '@google-cloud/storage';
-import shortid from 'shortid';
-import { JobSubmission } from './JobSubmission';
-import { commandFromJob } from '../commandFromJob';
 import nanoid from 'nanoid';
+import { pick } from 'ramda';
+import shortid from 'shortid';
 import { DatabasePoolConnectionType, sql } from 'slonik';
-import { Job, isValidJob } from './Job';
-import { JobStatus } from './JobStatus';
+import { encoderConfigurationFromJobSubmission } from './encoderConfigurationFromJobSubmission';
 import { enqueueCreate } from '../WorkerQueue/enqueueWorkerCreate';
+import { isValidJob, Job } from './Job';
+import { JobStatus } from './JobStatus';
+import { JobSubmission } from './JobSubmission';
 
 export const insertJobWithSubmission = async (
   storage: Storage,
@@ -17,7 +17,8 @@ export const insertJobWithSubmission = async (
 ): Promise<string> => {
   const id = shortid.generate();
   const fileName = `encodes/${id}/${jobSubmission.fileName}.mp4`;
-  const jobFile = await commandFromJob(
+
+  const encoderConfiguration = await encoderConfigurationFromJobSubmission(
     storage,
     bucket,
     fileName,
@@ -27,20 +28,20 @@ export const insertJobWithSubmission = async (
 
   await connection.query(sql`
   INSERT INTO job (
-    job_id,
-    bucket,
-    file_name,
-    cloud_init_data,
-    status,
-    created_at,
-    updated_at,
-    cloud_instance_name,
-    secret
+    "jobId",
+    "bucket",
+    "fileName",
+    "cloudInitData",
+    "status",
+    "createdAt",
+    "updatedAt",
+    "cloudInstanceName",
+    "secret"
   ) VALUES (
     ${id},
     ${bucket},
     ${fileName},
-    ${jobFile},
+    ${encoderConfiguration},
     ${JobStatus.NeedsEncoder},
     now(),
     now(),
@@ -60,31 +61,35 @@ export const getJob = async (
 ): Promise<Job> => {
   const row = await connection.one(sql`
     SELECT
-      bucket,
-      file_name,
-      cloud_init_data,
-      status,
-      created_at,
-      updated_at,
-      cloud_instance_name,
-      secret
+      "jobId",
+      "bucket",
+      "fileName",
+      "cloudInitData",
+      "status",
+      "createdAt",
+      "updatedAt",
+      "cloudInstanceName",
+      "secret"
     FROM
       job
     WHERE
-      job_id = ${jobId}
+      "jobId" = ${jobId}
   `);
 
-  const possibleJob = {
-    jobId,
-    bucket: row.bucket,
-    status: row.status,
-    secret: row.secret,
-    fileName: row.file_name,
-    cloudInitData: row.cloud_init_data,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    cloudInstanceName: row.cloud_instance_name,
-  };
+  const possibleJob = pick(
+    [
+      'jobId',
+      'bucket',
+      'status',
+      'secret',
+      'fileName',
+      'cloudInitData',
+      'createdAt',
+      'updatedAt',
+      'cloudInstanceName',
+    ],
+    row,
+  );
 
   if (!isValidJob(possibleJob)) {
     throw new Error('Cannot deserialize Job');
@@ -103,9 +108,9 @@ export const updateJobInstanceName = async (
     UPDATE job
     SET
       status = ${status},
-      cloud_instance_name: ${cloudInstanceName},
-      updated_at = NOW()
-    WHERE job_id = ${jobId}
+      "cloudInstanceName": ${cloudInstanceName},
+      "updatedAt" = NOW()
+    WHERE "jobId" = ${jobId}
   `);
 };
 
@@ -118,7 +123,7 @@ export const updateJobStatus = async (
     UPDATE job
     SET
       status = ${status},
-      updated_at = NOW()
-    WHERE job_id = ${jobId}
+      "updatedAt" = NOW()
+    WHERE "jobId" = ${jobId}
   `);
 };

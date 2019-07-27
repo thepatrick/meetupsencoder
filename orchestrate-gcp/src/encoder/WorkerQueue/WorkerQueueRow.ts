@@ -3,8 +3,8 @@ import { isNil, where } from 'ramda';
 import { isNonEmptyString } from '../../utils/isNonEmptyString';
 
 export interface WorkerQueueRow {
-  worker_queue_item_id: string;
-  job_id: string;
+  workerQueueItemId: string;
+  jobId: string;
   action: WorkerQueueAction;
 }
 
@@ -17,8 +17,8 @@ export const isValidWorkerQueueRow = (
 
   return where(
     {
-      worker_queue_item_id: isNonEmptyString,
-      job_id: isNonEmptyString,
+      workerQueueItemId: isNonEmptyString,
+      jobId: isNonEmptyString,
       action: (i: string) =>
         i === WorkerQueueAction.Create || i === WorkerQueueAction.Destroy,
     },

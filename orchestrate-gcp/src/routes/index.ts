@@ -1,9 +1,8 @@
-import Compute from '@google-cloud/compute';
 import { Storage } from '@google-cloud/storage';
 import { Application, NextFunction, Request, Response } from 'express';
 import { getStatusText, INTERNAL_SERVER_ERROR } from 'http-status-codes';
 import { DatabasePoolType, sql } from 'slonik';
-import { insertJobWithSubmission } from '../encoder/job/JobService';
+import { insertJobWithSubmission, getJob } from '../encoder/job/JobService';
 import { isValidJobSubmission } from '../encoder/job/JobSubmission';
 import { isHttpResponseError } from '../httpErrors/HttpResponseError';
 import { UnprocessableEntityError } from '../httpErrors/UnprocessableEntityError';
@@ -36,15 +35,15 @@ export const registerRoutes: RegisterRoutes = (
         const groups = await connection.any(
           sql`
             SELECT
-              job_id,
-              bucket,
-              file_name,
-              status,
-              created_at,
-              updated_at,
-              cloud_instance_id
+              "jobId",
+              "bucket",
+              "fileName",
+              "status",
+              "createdAt",
+              "updatedAt",
+              "cloudInstanceName"
             FROM job
-            ORDER BY created_at DESC
+            ORDER BY "createdAt" DESC
           `,
         );
 
@@ -62,6 +61,8 @@ export const registerRoutes: RegisterRoutes = (
           // TODO: Actuall call out that it's a validation proble.
           throw new UnprocessableEntityError();
         }
+
+        console.log('jobSubmission', jobSubmission);
 
         const id = await insertJobWithSubmission(
           storage,
@@ -83,11 +84,10 @@ export const registerRoutes: RegisterRoutes = (
         if (!isNonEmptyString(jobId)) {
           throw new Error('Job not found');
         }
-        const job = await connection.one(
-          sql`SELECT cloud_init_data FROM job WHERE job_id = ${jobId}`,
-        );
 
-        return job.cloud_init_data;
+        const job = await getJob(connection, jobId);
+
+        return job.cloudInitData;
       },
     ),
   ));

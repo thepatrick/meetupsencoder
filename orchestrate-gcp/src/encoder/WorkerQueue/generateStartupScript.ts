@@ -1,4 +1,4 @@
-export const userData = (
+export const generateStartupScript = (
   jobURL: string,
   secret: string,
 ): string => {

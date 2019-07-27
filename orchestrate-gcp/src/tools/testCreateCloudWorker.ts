@@ -1,5 +1,5 @@
 import { asyncMain } from '../utils/asyncMain';
-import { createCloudWorker } from '../encoder/createCloudWorker';
+import { createCloudWorker } from '../encoder/WorkerQueue/createCloudWorker';
 // tslint:disable-next-line: import-name
 import Compute from '@google-cloud/compute';
 
