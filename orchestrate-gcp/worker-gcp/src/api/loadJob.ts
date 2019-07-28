@@ -1,16 +1,17 @@
 import { EncoderJob, isEncoderJob } from './EncoderJob';
 import nodeFetch from 'node-fetch';
-import { createMEWTokenHeader } from './createMEWTokenHeader';
 
 export const loadJob = async (
   jobURL: string,
-  secret: string,
+  orchestratorToken: string,
 ): Promise<EncoderJob> => {
   const response = await nodeFetch(
     `${jobURL}/config`,
     {
       method: 'GET',
-      headers: createMEWTokenHeader(`${jobURL}/config`, secret),
+      headers: {
+        'X-MEW-TOKEN': orchestratorToken,
+      },
     },
   );
 

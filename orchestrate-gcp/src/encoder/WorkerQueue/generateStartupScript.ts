@@ -1,6 +1,6 @@
 export const generateStartupScript = (
   jobURL: string,
-  secret: string,
+  orchestatorToken: string,
 ): string => {
   const storagePath = '/var/twopats-live-melt';
 
@@ -19,9 +19,9 @@ write_files:
     Description=Encodes a video
 
     [Service]
-    ExecStart=/usr/bin/docker run --rm -u 2000 -v ${storagePath}:${storagePath}:ro \
+    ExecStart=/usr/bin/docker run --rm -u 2000 -v ${storagePath}:${storagePath} \
       -e MEW_JOB_URL=${jobURL} \
-      -e MEW_SECRET=${secret} \
+      -e MEW_ORCHESTRATOR_TOKEN=${orchestatorToken} \
       --name=twopats-live-melt thepatrick/melt
     ExecStop=/usr/bin/docker stop twopats-live-melt
     ExecStopPost=/usr/bin/docker rm twopats-live-melt
@@ -35,4 +35,4 @@ runcmd:
 // tslint:disable-next-line: max-line-length
 // curl -H 'Metadata-Flavor:Google' http://metadata.google.internal/computeMetadata/v1/instance/attributes/live-twopats-crofter-job-url
 // tslint:disable-next-line: max-line-length
-// curl -H 'Metadata-Flavor:Google' http://metadata.google.internal/computeMetadata/v1/instance/attributes/live-twopats-crofter-secret
+// curl -H 'Metadata-Flavor:Google' http://metadata.google.internal/computeMetadata/v1/instance/attributes/live-twopats-crofter-orchestrator-token

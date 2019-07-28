@@ -28,8 +28,7 @@ exports.up = (pgm) => {
       notNull: true,
       default: pgm.func('now()')
     },
-    cloudInstanceName: { type: 'varchar(255)' },
-    secret: { type: 'char(48)', notNull: true }
+    cloudInstanceName: { type: 'varchar(255)' }
   })
 }
 

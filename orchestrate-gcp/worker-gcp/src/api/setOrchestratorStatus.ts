@@ -1,10 +1,9 @@
 import nodeFetch from 'node-fetch';
 import { curry } from 'ramda';
 import { JobStatus } from './JobStatus';
-import { createMEWTokenHeader } from './createMEWTokenHeader';
 
 export const setOrchestratorStatus = curry(async (
-  secret: string,
+  orchestratorToken: string,
   jobURL: string,
   status: JobStatus,
 ): Promise<void> => {
@@ -13,7 +12,7 @@ export const setOrchestratorStatus = curry(async (
     {
       method: 'POST',
       headers: {
-        ...createMEWTokenHeader(`${jobURL}/status`, secret),
+        'X-MEW-TOKEN': orchestratorToken,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

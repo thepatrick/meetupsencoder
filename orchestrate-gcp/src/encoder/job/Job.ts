@@ -1,7 +1,8 @@
 import { JobStatus, isValidJobStatus } from './JobStatus';
 import { is, isNil, where } from 'ramda';
 import { isNonEmptyString } from '../../utils/isNonEmptyString';
-import { isString } from 'util';
+import { isString, isNumber } from 'util';
+import { QueryResultRowType } from 'slonik';
 
 export interface Job {
   jobId: string;
@@ -12,8 +13,17 @@ export interface Job {
   createdAt: Date;
   updatedAt: Date;
   cloudInstanceName?: string;
-  secret: string;
 }
+
+const dateFromTimestamp = (
+  possible: unknown,
+): Date => {
+  if (!isNumber(possible)) {
+    throw new Error(`Timestamp is not a number ${possible}`);
+  }
+
+  return new Date(possible);
+};
 
 const isDate = (
   possible: unknown,
@@ -24,6 +34,49 @@ const isUndefinedOrString = (
   possible: unknown,
 ): possible is string | undefined =>
   isNil(undefined) || isString(possible);
+
+export const jobFromQueryResultRow = (
+  row: QueryResultRowType,
+): Job => {
+  const jobId = row.jobId;
+  if (!isNonEmptyString(jobId)) {
+    throw new Error('job.jobId is not a non empty string');
+  }
+
+  const bucket = row.bucket;
+  if (!isNonEmptyString(bucket)) {
+    throw new Error('job.bucket is not a non empty string');
+  }
+
+  const fileName = row.fileName;
+  if (!isNonEmptyString(fileName)) {
+    throw new Error('job.fileName is not a non empty string');
+  }
+
+  const status = row.status;
+  if (!isValidJobStatus(status)) {
+    throw new Error(`job.status is not a valid JobStatus ${status}`);
+  }
+
+  const createdAt = dateFromTimestamp(row.createdAt);
+  const updatedAt = dateFromTimestamp(row.updatedAt);
+
+  const cloudInstanceName = row.cloudInstanceName;
+  if (!isUndefinedOrString(cloudInstanceName)) {
+    throw new Error(`job.cloudInstanceName is not undefined or string ${cloudInstanceName}`);
+  }
+
+  return {
+    jobId,
+    bucket,
+    fileName,
+    status,
+    createdAt,
+    updatedAt,
+    cloudInstanceName,
+    cloudInitData: row.cloudInitData,
+  };
+};
 
 export const isValidJob = (
   possible: unknown,
@@ -38,7 +91,6 @@ export const isValidJob = (
       createdAt: isDate,
       updatedAt: isDate,
       cloudInstanceName: isUndefinedOrString,
-      secret: isNonEmptyString,
     },
     possible,
   );

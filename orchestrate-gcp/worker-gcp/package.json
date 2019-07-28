@@ -10,12 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "jsonwebtoken": "^8.5.1",
     "node-fetch": "^2.6.0",
     "ramda": "^0.26.1"
   },
   "devDependencies": {
-    "@types/jsonwebtoken": "^8.3.2",
     "@types/node": "^12.6.2",
     "@types/node-fetch": "^2.5.0",
     "@types/ramda": "^0.26.15",

@@ -62,4 +62,5 @@ runWorkerQueue(
   pool,
   compute,
   selfUrl,
+  secret,
 );

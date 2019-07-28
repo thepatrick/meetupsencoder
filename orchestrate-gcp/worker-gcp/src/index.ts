@@ -10,19 +10,19 @@ import { JobStatus } from './api/JobStatus';
   const jobURL = !isNil(process.env.MEW_JOB_URL)
     && process.env.MEW_JOB_URL.length > 0
     && process.env.MEW_JOB_URL;
-  const secret = !isNil(process.env.MEW_SECRET)
-    && process.env.MEW_SECRET.length > 0
-    && process.env.MEW_SECRET;
+  const orchestratorToken = !isNil(process.env.MEW_ORCHESTRATOR_TOKEN)
+    && process.env.MEW_ORCHESTRATOR_TOKEN.length > 0
+    && process.env.MEW_ORCHESTRATOR_TOKEN;
 
-  if (!(jobURL && secret)) {
-    throw new Error('MEW_JOB_URL or MEW_SECRET not set');
+  if (!(jobURL && orchestratorToken)) {
+    throw new Error('MEW_JOB_URL or MEW_ORCHESTRATOR_TOKEN not set');
   }
 
-  const setStatus = setOrchestratorStatus(secret, jobURL);
+  const setStatus = setOrchestratorStatus(orchestratorToken, jobURL);
 
   log('Starting job', { jobURL });
 
-  const job = await loadJob(jobURL, secret);
+  const job = await loadJob(jobURL, orchestratorToken);
 
   log('Job', job);
 

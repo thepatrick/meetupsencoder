@@ -5,12 +5,14 @@ import { getJob, updateJobInstanceName, updateJobStatus } from '../job/JobServic
 import { JobStatus } from '../job/JobStatus';
 import { WorkerQueueAction } from './WorkerQueueAction';
 import { isValidWorkerQueueRow, WorkerQueueRow } from './WorkerQueueRow';
+import jsonwebtoken from 'jsonwebtoken';
 
 const waitFor = (time: number): Promise<void> => new Promise((resolve) => {
   setTimeout(resolve, time);
 });
 
 const handleCreate = async (
+  jwtSecret: string,
   pool: DatabasePoolType,
   compute: Compute,
   selfUrl: string,
@@ -21,13 +23,26 @@ const handleCreate = async (
 
     console.log('Should create cloud instance for', jobId);
 
-    const { secret } = await getJob(connection, jobId);
+    // TODO Check that we are actually still waiting for an encode...
+    // const { secret } = await getJob(connection, jobId);
+
+    const token = jsonwebtoken.sign(
+      {
+        jobId,
+      },
+      jwtSecret,
+      {
+        algorithm: 'HS512',
+        expiresIn: '24h',
+        subject: jobId,
+      },
+    );
 
     const [instanceName, operationPromise] = await createCloudWorker(
       compute,
       selfUrl,
       jobId,
-      secret,
+      token,
     );
 
     await updateJobInstanceName(
@@ -46,6 +61,7 @@ export const runWorkerQueue = async (
   pool: DatabasePoolType,
   compute: Compute,
   selfUrl: string,
+  jwtSecret: string,
 ): Promise<void> => {
   while (true) {
     const hadWork = await pool.connect(async connection =>
@@ -67,7 +83,13 @@ export const runWorkerQueue = async (
           try {
             switch (workerQueueItem.action) {
               case WorkerQueueAction.Create:
-                await handleCreate(pool, compute, selfUrl, workerQueueItem);
+                await handleCreate(
+                  jwtSecret,
+                  pool,
+                  compute,
+                  selfUrl,
+                  workerQueueItem,
+                );
                 break;
               case WorkerQueueAction.Destroy:
                 break;

@@ -2,11 +2,14 @@ import { Storage } from '@google-cloud/storage';
 import { Application, NextFunction, Request, Response } from 'express';
 import { getStatusText, INTERNAL_SERVER_ERROR } from 'http-status-codes';
 import { DatabasePoolType, sql } from 'slonik';
-import { insertJobWithSubmission, getJob } from '../encoder/job/JobService';
+import { getJob, insertJobWithSubmission, updateJobStatus } from '../encoder/job/JobService';
+import { isValidJobStatus } from '../encoder/job/JobStatus';
 import { isValidJobSubmission } from '../encoder/job/JobSubmission';
 import { isHttpResponseError } from '../httpErrors/HttpResponseError';
+import { NotFoundError } from '../httpErrors/NotFoundError';
 import { UnprocessableEntityError } from '../httpErrors/UnprocessableEntityError';
 import { asyncResponse } from '../middleware/asyncResponse';
+import { hasJWTToken } from '../middleware/hasJWTToken';
 import { hasSecret } from '../middleware/hasSecret';
 import { withDatabaseConnection } from '../middleware/withDatabaseConnection';
 
@@ -76,18 +79,43 @@ export const registerRoutes: RegisterRoutes = (
     ),
   ));
 
-  app.get('/api/v1/job/:jobId/config', asyncResponse(
+  app.get('/api/v1/job/:jobId/config', hasJWTToken(secret, 'jobId'), asyncResponse(
     withDatabaseConnection(
       pool,
       async (req, res, connection) => {
         const jobId = req.params.jobId;
         if (!isNonEmptyString(jobId)) {
-          throw new Error('Job not found');
+          throw new NotFoundError();
         }
 
         const job = await getJob(connection, jobId);
 
         return job.cloudInitData;
+      },
+    ),
+  ));
+
+  app.post('/api/v1/job/:jobId/status', hasJWTToken(secret, 'jobId'), asyncResponse(
+    withDatabaseConnection(
+      pool,
+      async (req, res, connection) => {
+        const jobId = req.params.jobId;
+        if (!isNonEmptyString(jobId)) {
+          throw new NotFoundError();
+        }
+
+        const status = req.body.status;
+        if (!isValidJobStatus(status)) {
+          throw new UnprocessableEntityError(`Unexpected status ${status}`);
+        }
+
+        await updateJobStatus(connection, jobId, status);
+
+        return {
+          jobId,
+          status,
+          ok: true,
+        };
       },
     ),
   ));

@@ -16,7 +16,7 @@ export const generateEncoderConfiguration = (
   profile: string,
   sources: MeltFile[][],
 ): string => {
-  const dataDirectory = '/var/lib/twopats.live-encoder/';
+  const dataDirectory = '/var/twopats.live-encoder/';
 
   const files: string[] = extractUniqFiles(sources);
 

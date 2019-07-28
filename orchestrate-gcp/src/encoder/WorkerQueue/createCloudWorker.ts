@@ -15,11 +15,11 @@ export const createCloudWorker = async (
   compute: Compute,
   selfURL: string,
   jobId: string,
-  secret: string,
+  orchestatorToken: string,
 ): Promise<[string, Promise<unknown>]> => {
   const jobURL = `${selfURL}/api/v1/job/${jobId}`;
   const instanceName = `encoder-${jobId}-worker-${nanoid(4).toLowerCase()}`;
-  const generatedStartupScript = generateStartupScript(jobURL, secret);
+  const generatedStartupScript = generateStartupScript(jobURL, orchestatorToken);
 
   console.log('-----------------------------');
   console.log(generatedStartupScript);
@@ -52,7 +52,7 @@ export const createCloudWorker = async (
       items: [
         metadata('cos-update-strategy', 'update_disabled'),
         metadata('live-twopats-crofter-job-url', jobURL),
-        metadata('live-twopats-crofter-secret', secret),
+        metadata('live-twopats-crofter-orchestator-token', orchestatorToken),
         metadata('startup-script', generatedStartupScript),
       ],
     },

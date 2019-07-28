@@ -1,5 +1,6 @@
 import { GSUtilCopyJob, isGSUtilCopyJob } from './GSUtilCopyJob';
 import { where, all } from 'ramda';
+import { isNonEmptyString } from './isNonEmptyString';
 
 export interface EncoderJob {
   downloads: GSUtilCopyJob[];
