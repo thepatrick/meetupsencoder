@@ -1,71 +1,46 @@
-import { spawn } from 'child_process';
-import { loadJob } from './loadJob';
-
-const log = (first: unknown, ...rest: unknown[]) => {
-  console.log(`${new Date()}: ${first}`, ...rest);
-};
-
-const execAsync = (cmd: string, args: string[]): Promise<void> => {
-  return new Promise((resolve, reject) => {
-
-    log(`Spawning ${cmd} [${args}]`);
-
-    const child = spawn(cmd, args, {
-      cwd: process.cwd(),
-      env: process.env,
-    });
-
-    child.stdout.on('data', chunk => log(`[${cmd}]: [LOG] ${chunk}`));
-    child.stderr.on('data', chunk => log(`[${cmd}]: [ERR] ${chunk}`));
-
-    child.on('close', (code) => {
-      if (code === 0) {
-        log(`${cmd} completed`);
-        resolve();
-      } else {
-        log(`${cmd} failed`);
-        reject(new Error(`${cmd} closed with code ${code}`));
-      }
-    });
-  });
-};
-
-const gsutilCopy = async (src: string, dest: string): Promise<void> => {
-  const cmd = 'gsutil';
-  const args = [
-    '-m',
-    'cp',
-    src,
-    dest,
-  ];
-
-  return execAsync(cmd, args);
-};
+import { loadJob } from './api/loadJob';
+import { execAsync } from './execAsync';
+import { log } from './log';
+import { gsutilCopy } from './gsutilCopy';
+import { isNil } from 'ramda';
+import { setOrchestratorStatus } from './api/setOrchestratorStatus';
+import { JobStatus } from './api/JobStatus';
 
 (async () => {
-  if (process.argv.length < 3) {
-    throw new Error('Job not specified. (node dist/index.js path/to/job.json)');
+  const jobURL = !isNil(process.env.MEW_JOB_URL)
+    && process.env.MEW_JOB_URL.length > 0
+    && process.env.MEW_JOB_URL;
+  const secret = !isNil(process.env.MEW_SECRET)
+    && process.env.MEW_SECRET.length > 0
+    && process.env.MEW_SECRET;
+
+  if (!(jobURL && secret)) {
+    throw new Error('MEW_JOB_URL or MEW_SECRET not set');
   }
 
-  const jobFile = process.argv[2];
+  const setStatus = setOrchestratorStatus(secret, jobURL);
 
-  log('Hello', process.argv);
+  log('Starting job', { jobURL });
 
-  const job = await loadJob(jobFile);
+  const job = await loadJob(jobURL, secret);
 
   log('Job', job);
+
+  setStatus(JobStatus.EncoderDownloading);
 
   for (const download of job.downloads) {
     await gsutilCopy(download.src, download.dest);
   }
 
+  setStatus(JobStatus.Encoding);
   await execAsync('melt', job.meltCommand);
 
+  setStatus(JobStatus.Uploading);
   for (const upload of job.uploads) {
     await gsutilCopy(upload.src, upload.dest);
   }
 
-  // if on GCP: shutdown self
+  setStatus(JobStatus.Finished);
 })()
   .catch((e: Error) => {
     console.error(e);
