@@ -12,7 +12,7 @@ exports.up = (pgm) => {
     timeCreated: {
       type: 'timestamp',
       notNull: true,
-      default: pgm.func('current_timestamp')
+      default: pgm.func('now()')
     },
     jobId: { type: 'char(16)', notNull: true },
     action: { type: 'worker_queue_action', notNull: true }

@@ -21,12 +21,12 @@ exports.up = (pgm) => {
     createdAt: {
       type: 'timestamp',
       notNull: true,
-      default: pgm.func('current_timestamp')
+      default: pgm.func('now()')
     },
     updatedAt: {
       type: 'timestamp',
       notNull: true,
-      default: pgm.func('current_timestamp')
+      default: pgm.func('now()')
     },
     cloudInstanceName: { type: 'varchar(255)' },
     secret: { type: 'char(48)', notNull: true }
