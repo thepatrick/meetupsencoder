@@ -5,16 +5,13 @@ import { gsutilCopy } from './gsutilCopy';
 import { isNil } from 'ramda';
 import { setOrchestratorStatus } from './api/setOrchestratorStatus';
 import { JobStatus } from './api/JobStatus';
+import { isNonEmptyString } from './api/isNonEmptyString';
 
 (async () => {
-  const jobURL = !isNil(process.env.MEW_JOB_URL)
-    && process.env.MEW_JOB_URL.length > 0
-    && process.env.MEW_JOB_URL;
-  const orchestratorToken = !isNil(process.env.MEW_ORCHESTRATOR_TOKEN)
-    && process.env.MEW_ORCHESTRATOR_TOKEN.length > 0
-    && process.env.MEW_ORCHESTRATOR_TOKEN;
+  const jobURL = process.env.MEW_JOB_URL;
+  const orchestratorToken = process.env.MEW_ORCHESTRATOR_TOKEN;
 
-  if (!(jobURL && orchestratorToken)) {
+  if (!(isNonEmptyString(jobURL) && isNonEmptyString(orchestratorToken))) {
     throw new Error('MEW_JOB_URL or MEW_ORCHESTRATOR_TOKEN not set');
   }
 
