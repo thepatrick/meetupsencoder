@@ -61,7 +61,9 @@ app.listen(port, (err?: Error) => {
     console.error(err);
     process.exit(1);
   }
-  logger.info(`server started at http://localhost:${port}`);
+  logger.info(
+    `server started at http://localhost:${port}, ${selfUrl}`,
+  );
 });
 
 runWorkerQueue(

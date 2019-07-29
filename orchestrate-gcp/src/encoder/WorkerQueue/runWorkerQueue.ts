@@ -7,6 +7,7 @@ import { WorkerQueueAction } from './WorkerQueueAction';
 import { isValidWorkerQueueRow, WorkerQueueRow } from './WorkerQueueRow';
 import jsonwebtoken from 'jsonwebtoken';
 import { Logger } from 'pino';
+import { handleDestroy } from './handleDestroy';
 
 const waitFor = (time: number): Promise<void> => new Promise((resolve) => {
   setTimeout(resolve, time);
@@ -98,6 +99,12 @@ export const runWorkerQueue = async (
                 );
                 break;
               case WorkerQueueAction.Destroy:
+                handleDestroy(
+                  logger,
+                  pool,
+                  compute,
+                  workerQueueItem,
+                );
                 break;
             }
             await connection.query(sql`

@@ -1,5 +1,5 @@
 import { Storage } from '@google-cloud/storage';
-import nanoid from 'nanoid';
+import generate from 'nanoid/generate';
 import { DatabasePoolConnectionType, sql } from 'slonik';
 import { encoderConfigurationFromJobSubmission } from './encoderConfigurationFromJobSubmission';
 import { enqueueCreate } from '../WorkerQueue/enqueueWorkerCreate';
@@ -15,7 +15,7 @@ export const insertJobWithSubmission = async (
   connection: DatabasePoolConnectionType,
   jobSubmission: JobSubmission,
 ): Promise<string> => {
-  const id = nanoid(16);
+  const id = generate('0123456789abcdefghijklmnopqrstuvwxyz', 16);
   const fileName = `encodes/${id}/${jobSubmission.fileName}.mp4`;
 
   const encoderConfiguration = await encoderConfigurationFromJobSubmission(
@@ -85,7 +85,7 @@ export const updateJobInstanceName = async (
     UPDATE job
     SET
       status = ${status},
-      "cloudInstanceName": ${cloudInstanceName},
+      "cloudInstanceName" = ${cloudInstanceName},
       "updatedAt" = NOW()
     WHERE "jobId" = ${jobId}
   `);
