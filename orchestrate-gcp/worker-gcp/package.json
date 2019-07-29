@@ -11,11 +11,14 @@
   "license": "ISC",
   "dependencies": {
     "node-fetch": "^2.6.0",
+    "pino": "^5.13.1",
+    "pino-pretty": "^3.2.0",
     "ramda": "^0.26.1"
   },
   "devDependencies": {
     "@types/node": "^12.6.2",
     "@types/node-fetch": "^2.5.0",
+    "@types/pino": "^5.8.8",
     "@types/ramda": "^0.26.15",
     "tslint": "^5.18.0",
     "tslint-config-airbnb": "^5.11.1",
