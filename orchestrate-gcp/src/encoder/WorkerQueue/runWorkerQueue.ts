@@ -6,12 +6,14 @@ import { JobStatus } from '../job/JobStatus';
 import { WorkerQueueAction } from './WorkerQueueAction';
 import { isValidWorkerQueueRow, WorkerQueueRow } from './WorkerQueueRow';
 import jsonwebtoken from 'jsonwebtoken';
+import { Logger } from 'pino';
 
 const waitFor = (time: number): Promise<void> => new Promise((resolve) => {
   setTimeout(resolve, time);
 });
 
 const handleCreate = async (
+  logger: Logger,
   jwtSecret: string,
   pool: DatabasePoolType,
   compute: Compute,
@@ -21,7 +23,7 @@ const handleCreate = async (
   pool.connect(async (connection) => {
     const { jobId } = workerQueueRow;
 
-    console.log('Should create cloud instance for', jobId);
+    logger.info(`Should create cloud instance for ${jobId}`);
 
     // TODO Check that we are actually still waiting for an encode...
     // const { secret } = await getJob(connection, jobId);
@@ -39,6 +41,7 @@ const handleCreate = async (
     );
 
     const [instanceName, operationPromise] = await createCloudWorker(
+      logger,
       compute,
       selfUrl,
       jobId,
@@ -54,16 +57,18 @@ const handleCreate = async (
 
     await operationPromise;
 
-    await updateJobStatus(connection, jobId, JobStatus.EncoderCreated);
+    await updateJobStatus(logger, connection, jobId, JobStatus.EncoderCreated);
   });
 
 export const runWorkerQueue = async (
+  logger: Logger,
   pool: DatabasePoolType,
   compute: Compute,
   selfUrl: string,
   jwtSecret: string,
 ): Promise<void> => {
   while (true) {
+    logger.info('Looking for work...');
     const hadWork = await pool.connect(async connection =>
       connection.transaction(async () => {
         const workerQueueItem = await connection.maybeOne(sql`
@@ -84,6 +89,7 @@ export const runWorkerQueue = async (
             switch (workerQueueItem.action) {
               case WorkerQueueAction.Create:
                 await handleCreate(
+                  logger,
                   jwtSecret,
                   pool,
                   compute,
@@ -99,7 +105,7 @@ export const runWorkerQueue = async (
               WHERE "workerQueueItemId" = ${workerQueueItem.workerQueueItemId}
             `);
           } catch (err) {
-            console.error(
+            logger.error(
               `Handling queue item ${workerQueueItem.workerQueueItemId} failed`,
               err,
             );

@@ -12,8 +12,12 @@ import { asyncResponse } from '../middleware/asyncResponse';
 import { hasJWTToken } from '../middleware/hasJWTToken';
 import { hasSecret } from '../middleware/hasSecret';
 import { withDatabaseConnection } from '../middleware/withDatabaseConnection';
+import { Logger } from 'pino';
+import { request } from 'http';
+import shortid = require('shortid');
 
 type RegisterRoutes = (
+  logger: Logger,
   app: Application,
   pool: DatabasePoolType,
   storage: Storage,
@@ -26,6 +30,7 @@ const isNonEmptyString = (possible: unknown): possible is string => {
 };
 
 export const registerRoutes: RegisterRoutes = (
+  logger,
   app,
   pool,
   storage,
@@ -109,7 +114,13 @@ export const registerRoutes: RegisterRoutes = (
           throw new UnprocessableEntityError(`Unexpected status ${status}`);
         }
 
-        await updateJobStatus(connection, jobId, status);
+        logger.info(`Updating ${jobId} to ${status}`);
+        await updateJobStatus(
+          logger,
+          connection,
+          jobId,
+          status,
+        );
 
         return {
           jobId,
@@ -124,9 +135,6 @@ export const registerRoutes: RegisterRoutes = (
     if (res.headersSent) {
       return next(err);
     }
-
-    console.error(err.stack);
-
     let statusCode = INTERNAL_SERVER_ERROR;
     let message = getStatusText(statusCode);
     if (isHttpResponseError(err)) {
@@ -134,5 +142,12 @@ export const registerRoutes: RegisterRoutes = (
       message = err.message;
     }
     res.status(statusCode).send({ statusCode, error: message });
+
+    logger.error(`Error processing request ${message}`, {
+      req,
+      err,
+      statusCode,
+    });
+
   });
 };

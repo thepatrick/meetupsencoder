@@ -9,7 +9,7 @@ export const hasJWTToken: (secret: string, propName: string) => RequestHandler =
     (req, res, next) => {
 
       const prop = req.params[propName];
-      if (isNonEmptyString(prop)) {
+      if (!isNonEmptyString(prop)) {
         console.log(`Unexpected value for ${propName}: ${prop}`);
         next(new ForbiddenError());
         return;

@@ -7,36 +7,35 @@ import { createDatabasePool } from './db';
 import { registerRoutes } from './routes';
 import express = require('express');
 import { runWorkerQueue } from './encoder/WorkerQueue/runWorkerQueue';
+import pino from 'pino';
+import { isNonEmptyString } from './utils/isNonEmptyString';
+
+const logger = pino();
 
 const app = express();
 
 const port = !isNil(process.env.PORT) && parseInt(process.env.PORT, 10); // default port to listen
+const secret = process.env.ME_SECRET;
+const bucket = process.env.GOOGLE_STORAGE_BUCKET;
+const selfUrl = process.env.ME_SELF_URL;
 
 if (!isNumber(port)) {
+  logger.error('Missing PORT');
   throw new Error('Missing PORT');
 }
 
-const secret = !isNil(process.env.ME_SECRET) &&
-  process.env.ME_SECRET.length > 10 &&
-  process.env.ME_SECRET;
-
-if (!secret) {
+if (!isNonEmptyString(secret)) {
+  logger.error('Missing ME_SECRET');
   throw new Error('Missing ME_SECRET (or not long enough)');
 }
 
-const bucket = !isNil(process.env.GOOGLE_STORAGE_BUCKET) &&
-  process.env.GOOGLE_STORAGE_BUCKET.length > 0 &&
-  process.env.GOOGLE_STORAGE_BUCKET;
-
-if (!bucket) {
+if (!isNonEmptyString(bucket)) {
+  logger.error('Missing GOOGLE_STORAGE_BUCKET');
   throw new Error('Missing GOOGLE_STORAGE_BUCKET');
 }
 
-const selfUrl = !isNil(process.env.ME_SELF_URL) &&
-  process.env.ME_SELF_URL.length > 0 &&
-  process.env.ME_SELF_URL;
-
-if (!selfUrl) {
+if (!isNonEmptyString(selfUrl)) {
+  logger.error('Missing ME_SELF_URL');
   throw new Error('Missing ME_SELF_URL');
 }
 
@@ -47,7 +46,14 @@ const storage = new Storage();
 const compute = new Compute();
 
 // sessionAuth(app);
-registerRoutes(app, pool, storage, secret, bucket);
+registerRoutes(
+  logger.child({ module: 'routes' }),
+  app,
+  pool,
+  storage,
+  secret,
+  bucket,
+);
 
 // start the Express server
 app.listen(port, (err?: Error) => {
@@ -55,10 +61,11 @@ app.listen(port, (err?: Error) => {
     console.error(err);
     process.exit(1);
   }
-  console.log(`server started at http://localhost:${port}`);
+  logger.info(`server started at http://localhost:${port}`);
 });
 
 runWorkerQueue(
+  logger.child({ module: 'workerQueue' }),
   pool,
   compute,
   selfUrl,

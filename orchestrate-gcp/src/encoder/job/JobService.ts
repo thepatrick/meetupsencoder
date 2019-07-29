@@ -111,6 +111,7 @@ export const updateJobInstanceName = async (
 };
 
 export const updateJobStatus = async (
+  logger: Logger,
   connection: DatabasePoolConnectionType,
   jobId: string,
   status: JobStatus,
