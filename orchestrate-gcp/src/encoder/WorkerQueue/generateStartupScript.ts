@@ -27,6 +27,8 @@ write_files:
     ExecStopPost=/usr/bin/docker rm twopats-live-melt
 
 runcmd:
+- mkdir ${storagePath}
+- chown twopats-live-melt ${storagePath}
 - systemctl daemon-reload
 - systemctl start twopats-live-melt.service
 `;
