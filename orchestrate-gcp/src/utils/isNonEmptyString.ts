@@ -1,4 +1,4 @@
-export const isNonEmptyString = (possible: unknown): possible is String => {
+export const isNonEmptyString = (possible: unknown): possible is string => {
   return typeof possible === 'string' &&
     possible.length > 0;
 };
