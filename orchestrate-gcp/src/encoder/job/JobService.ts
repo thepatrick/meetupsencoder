@@ -6,6 +6,8 @@ import { enqueueCreate } from '../WorkerQueue/enqueueWorkerCreate';
 import { Job, jobFromQueryResultRow } from './Job';
 import { JobStatus } from './JobStatus';
 import { JobSubmission } from './JobSubmission';
+import { enqueueWorkerDestroy } from '../WorkerQueue/enqueueWorkerDestroy';
+import { Logger } from 'pino';
 
 export const insertJobWithSubmission = async (
   storage: Storage,
@@ -70,34 +72,13 @@ export const getJob = async (
       "jobId" = ${jobId}
   `);
 
-  // const possibleJob = pick(
-  //   [
-  //     'jobId',
-  //     'bucket',
-  //     'status',
-  //     'fileName',
-  //     'cloudInitData',
-  //     'createdAt',
-  //     'updatedAt',
-  //     'cloudInstanceName',
-  //   ],
-  //   row,
-  // );
-
   return jobFromQueryResultRow(row);
-
-  // if (!isValidJob(possibleJob)) {
-  //   console.log('possibleJob', possibleJob, 'was deemed invalid :(');
-  //   throw new Error('Cannot deserialize Job');
-  // }
-
-  // return possibleJob;
 };
 
 export const updateJobInstanceName = async (
   connection: DatabasePoolConnectionType,
   jobId: string,
-  cloudInstanceName: string,
+  cloudInstanceName: string | null,
   status: JobStatus,
 ): Promise<void> => {
   await connection.query(sql`
@@ -123,4 +104,9 @@ export const updateJobStatus = async (
       "updatedAt" = NOW()
     WHERE "jobId" = ${jobId}
   `);
+
+  if (status === JobStatus.Failed || status === JobStatus.Finished) {
+    logger.info('Worker should be cleaned up, enqueueing...');
+    await enqueueWorkerDestroy(connection, jobId);
+  }
 };

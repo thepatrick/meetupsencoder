@@ -4,7 +4,12 @@ declare module '@google-cloud/compute' {
     promise(): Promise<T>;
   }
 
+  export interface VM {
+    delete(): Promise<[Operation<unknown>, unknown]>,
+  }
+
   export interface Zone {
+    vm(name: string): VM,
     createVM(
       name: string,
       config: {
