@@ -1,4 +1,4 @@
-import { pipe, map, prop, flatten, uniq, filter } from 'ramda';
+import { pipe, map, prop, flatten, uniq, filter, replace } from 'ramda';
 import { MeltFile } from '../MeltFile';
 import { createMeltCommand } from './createMeltCommand';
 import { join } from 'path';
@@ -8,6 +8,8 @@ const extractUniqFiles = pipe(
   flatten as (x: string[][]) => string[],
   uniq,
 );
+
+const flattenFileName = replace('/', '_');
 
 export const generateEncoderConfiguration = (
   bucket: string,
@@ -23,7 +25,7 @@ export const generateEncoderConfiguration = (
   const encodeFiles = map(
     map(
       source => filter(Boolean)([
-        join(dataDirectory, source.fileName),
+        join(dataDirectory, flattenFileName(source.fileName)),
         source.in ? `in=${source.in}` : undefined,
         source.out ? `out=${source.out}` : undefined,
       ]),
@@ -42,7 +44,7 @@ export const generateEncoderConfiguration = (
   );
 
   const downloads = map(
-    i => ({ src: `gs://${bucket}/${encoder}/${i}`, dest: join(dataDirectory, i) }),
+    i => ({ src: `gs://${bucket}/${encoder}/${i}`, dest: join(dataDirectory, flattenFileName(i)) }),
     files,
   );
 

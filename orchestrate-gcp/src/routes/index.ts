@@ -131,6 +131,34 @@ export const registerRoutes: RegisterRoutes = (
     ),
   ));
 
+  app.post('/api/v1/job/:jobId/log', hasJWTToken(secret, 'jobId'), asyncResponse(
+    withDatabaseConnection(
+      pool,
+      async (req, res, connection) => {
+        const jobId = req.params.jobId;
+        if (!isNonEmptyString(jobId)) {
+          throw new NotFoundError();
+        }
+
+        const {
+          level,
+          message,
+          info,
+        } = req.body;
+
+        logger.info(
+          `${jobId} [${level}]: ${message}`,
+          {
+            level,
+            ...info,
+          },
+        );
+
+        return { ok: true };
+      },
+    ),
+  ));
+
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     if (res.headersSent) {
       return next(err);

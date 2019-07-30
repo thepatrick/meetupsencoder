@@ -1,16 +1,4 @@
-FROM node:12.6.0-stretch-slim as builder
-
-WORKDIR /opt/twopats.live/encoder
-
-COPY . /opt/twopats.live/encoder
-
-RUN npm install \
-  && npm run build \
-  && rm -rf node_modules \
-  && npm install --production \
-  && rm -rf src
-
-FROM google/cloud-sdk:252.0.0-slim
+FROM node:10.16.0-stretch-slim
 
 RUN apt-get update \
   && apt-get install --assume-yes \
@@ -31,10 +19,16 @@ RUN apt-get update \
   python-httplib2 \
   python-mlt
 
-COPY --from=builder /usr/local /usr/local
-
-COPY --from=builder /opt/twopats.live/encoder /opt/twopats.live/encoder
-
 WORKDIR /opt/twopats.live/encoder
+
+COPY . /opt/twopats.live/encoder
+
+RUN apt-get install --assume-yes --no-install-recommends build-essential \
+  && npm install \
+  && npm run build \
+  && rm -rf node_modules \
+  && npm install --production \
+  && rm -rf src \
+  && apt-get purge -y --auto-remove build-essential
 
 ENTRYPOINT [ "node", "dist/index.js" ]

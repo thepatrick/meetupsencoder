@@ -2,7 +2,7 @@ export const generateStartupScript = (
   jobURL: string,
   orchestatorToken: string,
 ): string => {
-  const storagePath = '/var/twopats-live-melt';
+  const storagePath = '/var/twopats.live-encoder/';
 
   return `#cloud-config
 

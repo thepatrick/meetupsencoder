@@ -1,11 +1,15 @@
+import { Storage } from '@google-cloud/storage';
+import pino from 'pino';
 import { isNonEmptyString } from './api/isNonEmptyString';
 import { JobStatus } from './api/JobStatus';
 import { loadJob } from './api/loadJob';
+import { sendOrchestratorLog } from './api/sendOrchestratorLog';
 import { setOrchestratorStatus } from './api/setOrchestratorStatus';
 import { execAsync } from './execAsync';
-import { gsutilCopy } from './gsutilCopy';
-import pino from 'pino';
+import { downloadFromGoogleCloudStorage } from './storage/downloadFromGoogleCloudStorage';
+import { uploadToGoogleCloudStorage } from './storage/uploadToGoogleCloudStorage';
 
+const storage = new Storage();
 const logger = pino();
 
 (async () => {
@@ -16,13 +20,18 @@ const logger = pino();
     throw new Error('MEW_JOB_URL or MEW_ORCHESTRATOR_TOKEN not set');
   }
 
+  const sendLog = sendOrchestratorLog(
+    orchestratorToken,
+    jobURL,
+  );
+
   const setStatus = setOrchestratorStatus(
     logger.child({ module: 'setOrchestratorStatus' }),
     orchestratorToken,
     jobURL,
   );
 
-  logger.info('Starting job', { jobURL });
+  sendLog(logger, 'info', 'Starting job', { jobURL });
 
   let job;
   try {
@@ -33,16 +42,22 @@ const logger = pino();
     throw err;
   }
 
-  logger.info('Job', { job });
+  sendLog(logger, 'info', 'Got Job', job);
 
   await setStatus(JobStatus.EncoderDownloading);
 
   for (const download of job.downloads) {
-    logger.info('Downloading', download);
+    sendLog(logger, 'Downloading...');
     try {
-      await gsutilCopy(logger, download.src, download.dest);
+      sendLog(logger, 'info', 'Downloading', download);
+      await downloadFromGoogleCloudStorage(
+        storage,
+        sendLog(logger),
+        download.src,
+        download.dest,
+      );
     } catch (err) {
-      logger.error(`Problem downloading ${download.src}`, { err });
+      sendLog(logger, 'error', `Problem downloading ${download.src}`, { err: err.message });
       await setStatus(JobStatus.Failed);
       throw err;
     }
@@ -50,24 +65,33 @@ const logger = pino();
 
   await setStatus(JobStatus.Encoding);
   try {
-    await execAsync(logger, 'melt', job.meltCommand);
+    sendLog(logger, 'info', 'Starting melt');
+    await execAsync(sendLog(logger), 'melt', job.meltCommand);
   } catch (err) {
-    logger.error('Problem encoding', { err });
+    logger.error('Problem encoding', { err: err.message });
     await setStatus(JobStatus.Failed);
     throw err;
   }
+  sendLog(logger, 'info', 'Melt complete');
 
   await setStatus(JobStatus.Uploading);
   for (const upload of job.uploads) {
-    logger.info('Uploading', { upload });
+    sendLog(logger, 'info', 'Uploading', { upload });
     try {
-      await gsutilCopy(logger, upload.src, upload.dest);
+      sendLog(logger, 'info', 'Uploading', upload);
+      await uploadToGoogleCloudStorage(
+        storage,
+        sendLog(logger),
+        upload.src,
+        upload.dest,
+      );
     } catch (err) {
-      logger.error(`Problem uploading ${upload.src}`, { err });
+      sendLog(logger, 'error', `Problem uploading ${upload.src}`, { err: err.message });
       await setStatus(JobStatus.Failed);
       throw err;
     }
   }
+  sendLog(logger, 'info', 'Upload finished');
 
   await setStatus(JobStatus.Finished);
 })()
