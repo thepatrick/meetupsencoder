@@ -41,7 +41,7 @@ export const createCloudWorker = async (
         initializeParams: {
           sourceImage: 'projects/cos-cloud/global/images/cos-stable-75-12105-97-0',
           // diskType: 'projects/thepatrick-io/zones/australia-southeast1-b/diskTypes/pd-standard',
-          diskSizeGb: '10',
+          diskSizeGb: '100',
         },
         diskEncryptionKey: {},
       },
