@@ -12,7 +12,7 @@ export const downloadFromGoogleCloudStorage = async (
   const bucket = storage.bucket(srcURL.host);
   const file = bucket.file(srcURL.pathname);
 
-  logger('info', 'Downloading', { src, dest });
+  logger('trace', 'downloadFromGoogleCloudStorage', { src, dest });
   await file.download({
     destination: dest,
   });

@@ -5,7 +5,7 @@ import { JobStatus } from './api/JobStatus';
 import { loadJob } from './api/loadJob';
 import { sendOrchestratorLog } from './api/sendOrchestratorLog';
 import { setOrchestratorStatus } from './api/setOrchestratorStatus';
-import { execAsync } from './execAsync';
+import { melt } from './melt';
 import { downloadFromGoogleCloudStorage } from './storage/downloadFromGoogleCloudStorage';
 import { uploadToGoogleCloudStorage } from './storage/uploadToGoogleCloudStorage';
 
@@ -47,9 +47,8 @@ const logger = pino();
   await setStatus(JobStatus.EncoderDownloading);
 
   for (const download of job.downloads) {
-    sendLog(logger, 'Downloading...');
+    sendLog(logger, 'info', `Downloading ${download.src}`);
     try {
-      sendLog(logger, 'info', 'Downloading', download);
       await downloadFromGoogleCloudStorage(
         storage,
         sendLog(logger),
@@ -66,7 +65,7 @@ const logger = pino();
   await setStatus(JobStatus.Encoding);
   try {
     sendLog(logger, 'info', 'Starting melt');
-    await execAsync(sendLog(logger), 'melt', job.meltCommand);
+    await melt(sendLog(logger), job.meltCommand);
   } catch (err) {
     logger.error('Problem encoding', { err: err.message });
     await setStatus(JobStatus.Failed);
@@ -76,12 +75,10 @@ const logger = pino();
 
   await setStatus(JobStatus.Uploading);
   for (const upload of job.uploads) {
-    sendLog(logger, 'info', 'Uploading', { upload });
+    sendLog(logger, 'info', 'Uploading', upload);
     try {
-      sendLog(logger, 'info', 'Uploading', upload);
       await uploadToGoogleCloudStorage(
         storage,
-        sendLog(logger),
         upload.src,
         upload.dest,
       );
