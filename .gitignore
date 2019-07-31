@@ -64,4 +64,6 @@ typings/
 
 *.mp4
 
-storage
+/storage
+/storage-gcp
+

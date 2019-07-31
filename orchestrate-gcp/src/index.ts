@@ -1,57 +1,75 @@
+import Compute from '@google-cloud/compute';
 import { Storage } from '@google-cloud/storage';
-import { map, pipe } from 'ramda';
-import { timeFromFileName } from './utils/time';
-import { listFiles } from './listFiles';
-import { userData } from './userData';
-import { findSourcesForClip } from './findSourcesForClip';
+import { isNil } from 'ramda';
+import { isNumber } from 'util';
+import { createDatabasePool } from './db';
+// import { sessionAuth } from './middleware/sessionAuth';
+import { registerRoutes } from './routes';
+import express = require('express');
+import { runWorkerQueue } from './encoder/WorkerQueue/runWorkerQueue';
+import pino from 'pino';
+import { isNonEmptyString } from './utils/isNonEmptyString';
 
-const storage = new Storage();
+const logger = pino();
 
-interface Job {
-  bucket: string;
-  encoderId: string;
-  clips: string[][];
-  fps: number;
-  profile: string;
-  fileName: string;
+const app = express();
+
+const port = !isNil(process.env.PORT) && parseInt(process.env.PORT, 10); // default port to listen
+const secret = process.env.ME_SECRET;
+const bucket = process.env.GOOGLE_STORAGE_BUCKET;
+const selfUrl = process.env.ME_SELF_URL;
+
+if (!isNumber(port)) {
+  logger.error('Missing PORT');
+  throw new Error('Missing PORT');
 }
 
-const commandFromJob = async ({
+if (!isNonEmptyString(secret)) {
+  logger.error('Missing ME_SECRET');
+  throw new Error('Missing ME_SECRET (or not long enough)');
+}
+
+if (!isNonEmptyString(bucket)) {
+  logger.error('Missing GOOGLE_STORAGE_BUCKET');
+  throw new Error('Missing GOOGLE_STORAGE_BUCKET');
+}
+
+if (!isNonEmptyString(selfUrl)) {
+  logger.error('Missing ME_SELF_URL');
+  throw new Error('Missing ME_SELF_URL');
+}
+
+app.use(express.json());
+
+const pool = createDatabasePool();
+const storage = new Storage();
+const compute = new Compute();
+
+// sessionAuth(app);
+registerRoutes(
+  logger.child({ module: 'routes' }),
+  app,
+  pool,
+  storage,
+  secret,
   bucket,
-  encoderId,
-  clips,
-  fps,
-  profile,
-  fileName,
-}: Job): Promise<{ generatedUserData: string }> => {
-  const files = await listFiles(storage, bucket, `${encoderId}/`);
+);
 
-  const sources = map(
-    pipe(
-      map(timeFromFileName),
-      findSourcesForClip(files, fps),
-    ),
-    clips,
+// start the Express server
+app.listen(port, (err?: Error) => {
+  if (err !== undefined) {
+    console.error(err);
+    process.exit(1);
+  }
+  logger.info(
+    `server started at http://localhost:${port}, ${selfUrl}`,
   );
+});
 
-  const generatedUserData = userData(bucket, encoderId, fileName, profile, sources);
-
-  return { generatedUserData };
-};
-
-(async () => {
-  const { generatedUserData } = await commandFromJob({
-    bucket: 'video.twopats.live',
-    encoderId: 'standalone',
-    clips: [
-      // ['2019-06-19/18_12_50', '2019-06-19/18_50_00'],
-      ['2019-06-19/18_51_00', '2019-06-19/19_13_00'],
-    ],
-    fps: 25,
-    profile: 'atsc_1080p_25',
-    fileName: 'encodes/test.mp4',
-  });
-
-  console.log(generatedUserData);
-})()
-  .catch(err => console.error(err));
+runWorkerQueue(
+  logger.child({ module: 'workerQueue' }),
+  pool,
+  compute,
+  selfUrl,
+  secret,
+);

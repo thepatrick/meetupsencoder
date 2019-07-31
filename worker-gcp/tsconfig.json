@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    // "removeComments": true,
+      // "removeComments": true,
     "module": "commonjs",
     "target": "es2017",
     "noImplicitAny": true,
@@ -9,7 +9,7 @@
     "sourceMap": true,
     "outDir": "dist",
     "alwaysStrict": true,
-    "baseUrl": "src",
+    "baseUrl": ".",
     "paths": {
       "*": [
         "node_modules/*"
@@ -17,14 +17,8 @@
     },
     "esModuleInterop": true
   },
-  "lib": [
-    "es2017"
-  ],
+  "lib": ["es2017"],
   "include": [
     "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "types"
   ]
 }
