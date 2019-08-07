@@ -1,7 +1,8 @@
 {
-  "name": "orchestrate-gcp-docker-melt",
+  "name": "@patrick/meetupsencoder-worker-gcp",
   "version": "1.0.0",
-  "description": "",
+  "description": "Encodes video on Google Cloud",
+  "repository": "https://github.com/thepatrick/meetupsencoder",
   "main": "index.js",
   "scripts": {
     "build": "tslint --project . && tsc",
