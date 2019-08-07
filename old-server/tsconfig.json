@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        // "removeComments": true,
+      "module": "commonjs",
+      "target": "es2017",
+      "noImplicitAny": true,
+      "strictNullChecks": true,
+      "moduleResolution": "node",
+      "sourceMap": true,
+      "outDir": "dist",
+      "alwaysStrict": true,
+      "baseUrl": ".",
+      "paths": {
+        "*": [
+          "node_modules/*"
+        ]
+      }
+    },
+    "include": [
+      "src/**/*"
+    ]
+  }
