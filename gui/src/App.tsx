@@ -10,9 +10,6 @@ import Navigator from './paperbase/Navigator';
 import { drawerWidth } from './paperbase/theme';
 import { RootState } from './reducers';
 import withRoot from './withRoot';
-import { Auth0Provider } from "./react-auth0-wrapper";
-import config from "./auth_config.json";
-import { PrivateRoute } from './components/PrivateRoute';
 
 // const lightColor = 'rgba(255, 255, 255, 0.7)';
 
@@ -37,9 +34,8 @@ const useStyles = makeStyles((theme: Theme) => ({
 function Routes({ className }: { className: string }) {
   return (
     <div className={className}>
-      <PrivateRoute exact={true} path="/" component={HomePage} />
-      {/* <Route exact={true} path="/home" component={HomePage} />
-			<Route exact={true} path="/todo" component={TodoPage} /> */}
+      <Route exact={true} path="/" component={HomePage} />
+			{/* <Route exact={true} path="/todo" component={TodoPage} /> */}
     </div>
   );
 }
@@ -49,18 +45,6 @@ interface AppProps {
   setMobileOpen: (open: boolean) => void;
 }
 
-// A function that routes the user to the right place
-// after login
-const onRedirectCallback = (appState?: { targetUrl: string }) => {
-  window.history.replaceState(
-      {},
-      document.title,
-      appState && appState.targetUrl
-          ? appState.targetUrl
-          : window.location.pathname
-  );
-};
-
 const App: FC<AppProps> = ({ mobileOpen, setMobileOpen, ...props }) => {
   const classes = useStyles(props);
 
@@ -69,31 +53,24 @@ const App: FC<AppProps> = ({ mobileOpen, setMobileOpen, ...props }) => {
   };
 
   return (
-    <Auth0Provider
-        domain={config.domain}
-        client_id={config.clientId}
-        redirect_uri={window.location.origin}
-        onRedirectCallback={onRedirectCallback}
-    >
-      <Router history={history}>
-        <div className={classes.root}>
-          <nav className={classes.drawer}>
-            <Hidden smUp implementation="js">
-              <Navigator
-                PaperProps={{ style: { width: drawerWidth } }}
-                variant="temporary"
-                open={mobileOpen}
-                onClose={handleDrawerToggle}
-              />
-            </Hidden>
-            <Hidden xsDown implementation="css">
-              <Navigator PaperProps={{ style: { width: drawerWidth } }} />
-            </Hidden>
-          </nav>
-          <Routes className={classes.appContent} />
-        </div>
-      </Router>
-    </Auth0Provider>
+    <Router history={history}>
+      <div className={classes.root}>
+        <nav className={classes.drawer}>
+          <Hidden smUp implementation="js">
+            <Navigator
+              PaperProps={{ style: { width: drawerWidth } }}
+              variant="temporary"
+              open={mobileOpen}
+              onClose={handleDrawerToggle}
+            />
+          </Hidden>
+          <Hidden xsDown implementation="css">
+            <Navigator PaperProps={{ style: { width: drawerWidth } }} />
+          </Hidden>
+        </nav>
+        <Routes className={classes.appContent} />
+      </div>
+    </Router>
   );
 }
 

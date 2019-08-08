@@ -1,4 +1,5 @@
 {
   "domain": "twopats.au.auth0.com",
-  "clientId": "95VnRFNb34dueZIzqH0lg7SHkPU3ZGvj"
+  "clientId": "95VnRFNb34dueZIzqH0lg7SHkPU3ZGvj",
+  "audience": "https://crofter-api.twopats.live/"
 }

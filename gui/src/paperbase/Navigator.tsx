@@ -15,7 +15,6 @@ import clsx from 'clsx';
 import React from 'react';
 import NavigatorGroupList from '../components/NavigatorGroupList';
 import { history } from "../configureStore";
-import {useAuth0} from "../react-auth0-wrapper";
 import Lock from '@material-ui/icons/Lock';
 
 const categories = [
@@ -86,16 +85,6 @@ interface NavigatorProps {
 function Navigator(props: NavigatorProps) {
   const { classes, ...other } = props;
 
-  const auth0Context = useAuth0();
-  if (!auth0Context) {
-    return <div>Loading...</div>;
-  }
-  const { isAuthenticated, loginWithRedirect, logout } = auth0Context;
-
-  if (!isAuthenticated) {
-    return <div></div>;
-  }
-
   return (
     <Drawer variant="permanent" {...other}>
       <List disablePadding>
@@ -155,7 +144,7 @@ function Navigator(props: NavigatorProps) {
           <ListItemText classes={{ primary: classes.categoryHeaderPrimary }}>You</ListItemText>
         </ListItem>
 
-        <ListItem button className={clsx(classes.item)} onClick={() => logout()}>
+        <ListItem button className={clsx(classes.item)} onClick={() => alert('logout')}>
           <ListItemIcon className={classes.itemIcon}>
             <Lock />
           </ListItemIcon>

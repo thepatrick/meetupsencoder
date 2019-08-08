@@ -47,5 +47,5 @@
     "@types/react-router-dom": "^4.3.2",
     "@types/redux-logger": "^3.0.7"
   },
-  "proxy": "http://localhost:8081"
+  "proxy": "http://localhost:3001"
 }
