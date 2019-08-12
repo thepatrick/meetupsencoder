@@ -1,8 +1,9 @@
 import { JobStatus, isValidJobStatus } from './JobStatus';
 import { is, isNil, where } from 'ramda';
 import { isNonEmptyString } from '../../utils/isNonEmptyString';
-import { isString, isNumber } from 'util';
+import { isString } from 'util';
 import { QueryResultRowType } from 'slonik';
+import { dateFromTimestamp } from '../../utils/dateFromTimestamp';
 
 export interface Job {
   jobId: string;
@@ -14,16 +15,6 @@ export interface Job {
   updatedAt: Date;
   cloudInstanceName?: string;
 }
-
-const dateFromTimestamp = (
-  possible: unknown,
-): Date => {
-  if (!isNumber(possible)) {
-    throw new Error(`Timestamp is not a number ${possible}`);
-  }
-
-  return new Date(possible);
-};
 
 const isDate = (
   possible: unknown,

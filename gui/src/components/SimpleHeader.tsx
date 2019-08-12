@@ -5,7 +5,7 @@ import Typography from '@material-ui/core/Typography';
 import React, { FC } from 'react';
 import ShowMobileMenu from './ShowMobileMenu';
 
-const HomePageHeader: FC = () => (
+export const SimpleHeader: FC = ({ children }) => (
   <React.Fragment>
     <AppBar color="primary" position="sticky" elevation={0}>
       <Toolbar>
@@ -18,7 +18,7 @@ const HomePageHeader: FC = () => (
         <Grid container alignItems="center" spacing={1}>
           <Grid item xs>
             <Typography color="inherit" variant="h5" component="h1">
-              Welcome to twopats.live's Rough Cut
+              {children}
             </Typography>
           </Grid>
         </Grid>
@@ -26,5 +26,3 @@ const HomePageHeader: FC = () => (
     </AppBar>
   </React.Fragment>
 );
-
-export default HomePageHeader;

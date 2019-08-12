@@ -2,12 +2,18 @@ import { History } from "history";
 import { combineReducers } from "redux";
 import { Event, Group, Talk } from "../model/Group";
 import { groups } from './groups';
+import { groupAdd } from './groupAdd';
 import * as mobileOpen from './mobileOpen';
+import { reducer as formReducer } from 'redux-form'
 
 export interface RootState {
 	mobileOpen: boolean;
 	groups: {
 		byId: { [key: string]: Group };
+		loading: boolean;
+		error?: Error;
+	};
+	groupAdd: {
 		loading: boolean;
 		error?: Error;
 	};
@@ -23,5 +29,7 @@ export default (history: History) =>
 	combineReducers({
 		...mobileOpen,
 		groups,
+		groupAdd,
+		form: formReducer,
 		// ...todoReducer,
 	});

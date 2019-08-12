@@ -1,5 +1,6 @@
 import { getStatusText } from 'http-status-codes';
 import { is } from 'ramda';
+import { UnauthorizedError } from 'express-jwt';
 
 export class HttpResponseError extends Error {
   statusCode: number;
@@ -12,4 +13,8 @@ export class HttpResponseError extends Error {
 
 export const isHttpResponseError = (possible: unknown): possible is HttpResponseError => {
   return is(HttpResponseError, possible);
+};
+
+export const isJWTUnauthorisedError = (possible: unknown): possible is UnauthorizedError => {
+  return is(UnauthorizedError, possible);
 };

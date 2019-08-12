@@ -14,6 +14,7 @@ import { groupsLoad } from "../actions";
 import { history } from "../configureStore";
 import { Group } from "../model/Group";
 import { RootState } from "../reducers";
+import { useAuth0 } from "../react-auth0-spa";
 
 const useStyles = makeStyles((theme: Theme) => ({
   categoryHeader: {
@@ -52,13 +53,20 @@ interface Props {
 
 const NavigatorGroupList: FC<Props> = (props) => {
   const classes = useStyles(props);
+  
+  const { loading: auth0Loading, isAuthenticated, getTokenSilently } = useAuth0();
 
   const { loading, groups, error, groupsLoad } = props;
 
   useEffect(() => {
-    console.log('hi');
-    groupsLoad();
-  }, []);
+    if (auth0Loading || !isAuthenticated) {
+      return;
+    }
+    (async () => {
+      const token = await getTokenSilently();
+      groupsLoad(token);
+    })();
+  }, [auth0Loading, isAuthenticated, getTokenSilently, groupsLoad]);
 
   return (
     <React.Fragment>
@@ -107,7 +115,7 @@ const NavigatorGroupList: FC<Props> = (props) => {
           }}
           onClick={() => history.push(`/group/new`)}
         >
-          Add...
+          Create new group
         </ListItemText>
       </ListItem>
     </React.Fragment>
@@ -121,8 +129,8 @@ const mapStateToProps = (state: RootState) => ({
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<{}, {}, any>) => ({
-  groupsLoad() {
-    dispatch(groupsLoad());
+  groupsLoad(token: string | undefined) {
+    dispatch(groupsLoad(token));
   }
 });
 

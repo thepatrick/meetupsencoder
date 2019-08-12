@@ -6,26 +6,42 @@ import createReducer from "./createReducer";
 const byId = createReducer<{ [key: string]: Group }>({}, {
   [ActionType.GROUPS_LOADED](state: { [key: string]: Group }, action: Action<Group[]>) {
     return action.payload.reduce((collect: { [key: string]: Group }, group: Group) => {
-      collect[group.group_id] = group;
+      collect[group.groupId] = group;
       return collect;
     }, {});
-    return action.payload;
   }
 });
 
 const loading = createReducer<boolean>(false, {
   [ActionType.GROUPS_LOADING](state: boolean, action: Action<boolean>) {
     return action.payload;
-  }
+  },
+
+  [ActionType.GROUPS_LOADING_ERROR](state: Error | null, action: Action<Error>) {
+    if (action.payload !== null) {
+      return false;
+    }
+
+    return state;
+  },
+
+  [ActionType.GROUPS_LOADED](state: { [key: string]: Group }, action: Action<Group[]>) {
+    return false;
+  },
 });
 
-const error = createReducer<Error | undefined>(undefined, {
-  [ActionType.GROUPS_LOADING_ERROR](state: Error | undefined, action: Action<Error>) {
+const error = createReducer<Error | null>(null, {
+  [ActionType.GROUPS_LOADING_ERROR](state: Error | null, action: Action<Error>) {
     return action.payload;
-  }
+  },
+
+  [ActionType.GROUPS_LOADED](state: { [key: string]: Group }, action: Action<Group[]>) {
+    return null;
+  },
 });
 
 export const groups = combineReducers({
   byId,
   loading,
+  error,
 });

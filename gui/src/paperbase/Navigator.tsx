@@ -89,7 +89,7 @@ function Navigator(props: NavigatorProps) {
     <Drawer variant="permanent" {...other}>
       <List disablePadding>
         <ListItem className={clsx(classes.firebase, classes.item, classes.itemCategory)}>
-          Automatic Pancake
+          Rough Cut
         </ListItem>
 
         <ListItem button className={clsx(classes.item, classes.itemCategory)} onClick={() => history.push("/")}>

@@ -1,20 +1,33 @@
 export interface Group {
-  id: number;
-  group_id: string;
+  groupId: string;
   brand: string;
 };
 
+export interface GroupUser {
+  groupId: string;
+  userSub: string;
+}
+
 export interface Event {
-  event_id: number;
-  group_id: number;
-  title: string;
-  start_time: Date;
+  eventId: string;
+  groupId: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  startTime: Date;
+  endTime: Date;
 };
 
 export interface Talk {
-  talk_id: number;
-  event_id: number;
+  talkId: string;
+  groupId: string;
+  eventId: string;
   title: string;
   fps: number;
 };
 
+export interface TalkPresenter {
+  talkPresnterId: string;
+  talkId: string;
+  email: string;
+}

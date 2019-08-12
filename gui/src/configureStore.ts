@@ -6,7 +6,7 @@ import thunk from 'redux-thunk';
 import rootReducer from './reducers';
 
 const logger = (createLogger as any)();
-const history = createBrowserHistory();
+export const history = createBrowserHistory();
 
 const dev = process.env.NODE_ENV === 'development';
 
@@ -20,5 +20,4 @@ export default () => {
   return createStore(rootReducer(history), {}, middleware);
 }
 
-export { history };
-
+export const getHistory = () => history;

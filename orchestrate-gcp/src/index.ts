@@ -9,6 +9,8 @@ import express = require('express');
 import { runWorkerQueue } from './encoder/WorkerQueue/runWorkerQueue';
 import pino from 'pino';
 import { isNonEmptyString } from './utils/isNonEmptyString';
+import jwt from 'express-jwt';
+import jwksRsa from 'jwks-rsa';
 
 const logger = pino();
 
@@ -45,6 +47,18 @@ const pool = createDatabasePool();
 const storage = new Storage();
 const compute = new Compute();
 
+const checkJwt = jwt({
+  secret: jwksRsa.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+    jwksUri: 'https://twopats.au.auth0.com/.well-known/jwks.json',
+  }),
+  audience: 'https://crofter-api.twopats.live/',
+  issuer: 'https://twopats.au.auth0.com/',
+  algorithms: ['RS256'],
+});
+
 // sessionAuth(app);
 registerRoutes(
   logger.child({ module: 'routes' }),
@@ -53,6 +67,7 @@ registerRoutes(
   storage,
   secret,
   bucket,
+  checkJwt,
 );
 
 // start the Express server

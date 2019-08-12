@@ -16,6 +16,7 @@
     "react-router-dom": "5.0.0",
     "react-scripts": "3.0.1",
     "redux-devtools-extension": "^2.13.8",
+    "redux-form": "^8.2.5",
     "redux-logger": "^3.0.6",
     "redux-persist": "5.10.0",
     "redux-thunk": "2.3.0",
@@ -45,7 +46,8 @@
   "devDependencies": {
     "@types/react-redux": "^7.0.8",
     "@types/react-router-dom": "^4.3.2",
+    "@types/redux-form": "^8.1.4",
     "@types/redux-logger": "^3.0.7"
   },
-  "proxy": "http://localhost:3001"
+  "proxy": "http://localhost:8080"
 }

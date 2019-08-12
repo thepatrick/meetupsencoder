@@ -1,46 +1,50 @@
 import { Storage } from '@google-cloud/storage';
 import { Application, NextFunction, Request, Response } from 'express';
-import { getStatusText, INTERNAL_SERVER_ERROR } from 'http-status-codes';
+import jwt from 'express-jwt';
+import { getStatusText, INTERNAL_SERVER_ERROR, UNAUTHORIZED } from 'http-status-codes';
+import { Logger } from 'pino';
 import { DatabasePoolType, sql } from 'slonik';
 import { getJob, insertJobWithSubmission, updateJobStatus } from '../encoder/job/JobService';
 import { isValidJobStatus } from '../encoder/job/JobStatus';
 import { isValidJobSubmission } from '../encoder/job/JobSubmission';
-import { isHttpResponseError } from '../httpErrors/HttpResponseError';
+import { isHttpResponseError, isJWTUnauthorisedError } from '../httpErrors/HttpResponseError';
 import { NotFoundError } from '../httpErrors/NotFoundError';
 import { UnprocessableEntityError } from '../httpErrors/UnprocessableEntityError';
 import { asyncResponse } from '../middleware/asyncResponse';
 import { hasJWTToken } from '../middleware/hasJWTToken';
-import { hasSecret } from '../middleware/hasSecret';
 import { withDatabaseConnection } from '../middleware/withDatabaseConnection';
-import { Logger } from 'pino';
-import { request } from 'http';
-import shortid = require('shortid');
+import { jwtUserFromRequestUser } from './JWTUser';
+import { registerGroupRoutes } from './group';
+import { isNonEmptyString } from '../utils/isNonEmptyString';
 
-type RegisterRoutes = (
+declare global {
+  namespace Express {
+    interface Request {
+      user: any;
+    }
+  }
+}
+export const registerRoutes = (
   logger: Logger,
   app: Application,
   pool: DatabasePoolType,
   storage: Storage,
   secret: string,
   bucket: string,
-) => void;
+  checkJwt: jwt.RequestHandler,
+): void => {
 
-const isNonEmptyString = (possible: unknown): possible is string => {
-  return typeof possible === 'string' && possible.length > 0;
-};
+  registerGroupRoutes(
+    logger.child({ routes: '/api/v1/group' }),
+    app,
+    pool,
+    checkJwt,
+  );
 
-export const registerRoutes: RegisterRoutes = (
-  logger,
-  app,
-  pool,
-  storage,
-  secret,
-  bucket,
-) => {
-  app.get('/api/v1/job', hasSecret(secret), asyncResponse(
+  app.get('/api/v1/job', checkJwt, asyncResponse(
     withDatabaseConnection(
       pool, async (req, res, connection) => {
-        const groups = await connection.any(
+        const jobs = await connection.any(
           sql`
             SELECT
               "jobId",
@@ -55,11 +59,11 @@ export const registerRoutes: RegisterRoutes = (
           `,
         );
 
-        return groups;
+        return jobs;
       }),
   ));
 
-  app.post('/api/v1/job', hasSecret(secret), asyncResponse(
+  app.post('/api/v1/job', checkJwt, asyncResponse(
     withDatabaseConnection(
       pool,
       async (req, res, connection) => {
@@ -169,6 +173,11 @@ export const registerRoutes: RegisterRoutes = (
       statusCode = err.statusCode;
       message = err.message;
     }
+    if (isJWTUnauthorisedError(err)) {
+      statusCode = UNAUTHORIZED;
+      message = getStatusText(statusCode);
+    }
+
     res.status(statusCode).send({ statusCode, error: message });
 
     logger.error(`Error processing request ${message}`, {
