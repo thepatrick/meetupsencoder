@@ -55,7 +55,7 @@ const groupAdding = action<boolean>(ActionType.GROUP_ADDING);
 const groupAddingError = action<Error | null>(ActionType.GROUP_ADDING_ERROR);
 const groupAdded = action<Group>(ActionType.GROUP_ADDED);
 
-export const groupAdd =(history: History<any>,token: string | undefined, brand: string) => (
+export const groupAdd = (history: History<any>, token: string | undefined, brand: string) => (
   async(dispatch: ThunkDispatch<{}, {}, AnyAction>) => {
     dispatch(groupAdding(true));
     try {

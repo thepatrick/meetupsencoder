@@ -14,6 +14,7 @@ import { useAuth0 } from './react-auth0-spa';
 import { PrivateRoute } from './components/PrivateRoute';
 import { LoginRequired } from './pages/LoginRequired';
 import { NewGroup } from './pages/Group/NewGroup';
+import { ShowGroup } from './pages/Group/ShowGroup';
 
 // const lightColor = 'rgba(255, 255, 255, 0.7)';
 
@@ -41,6 +42,7 @@ function Routes({ className }: { className: string }) {
       <Switch>
         <PrivateRoute exact={true} path="/" component={HomePage} />
         <PrivateRoute exact={true} path="/group/new" component={NewGroup} />
+        <PrivateRoute exact={true} path="/group/:groupId" component={ShowGroup} />
         <Route exact={true} path="/login-required" component={LoginRequired} />
         {/* <Route exact={true} path="/todo" component={TodoPage} /> */}
       </Switch>

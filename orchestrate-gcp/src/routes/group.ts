@@ -80,4 +80,14 @@ export const registerGroupRoutes = (
       },
     ),
   ));
+
+  app.get('/api/v1/group/:groupId/events', checkJwt, asyncResponse(
+    withDatabaseConnection(
+      pool, async (req, res, connection) => {
+        logger.info('Getting group', req.params.groupId);
+
+        return {};
+      },
+    ),
+  ));
 };
